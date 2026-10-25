@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Editar Perfil - LARP HUB</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body style="background-color: #111; color: white;">
+
+    <header class="top-header">
+        <div class="top-bar">
+            <div class="logo">
+                <img src="../static/o.png" alt="LARP Hub Logo" class="logo-img">
+            </div>
+            <div class="top-links">
+                {% if session['username'] %}
+                    <span style="color: white; font-weight: bold; margin-right: 15px;">
+                        Hola, {{ session['username'] }}
+                    </span>
+                    <a href="/logout" style="color: #ff4c4c;">Cerrar Sesión</a>
+                {% else %}
+                    <a href="/login">Iniciar Sesión</a>
+                    <a href="/register">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/browse">Explorar</a></li>
+                <li><a href="/messages">Mensajes</a></li>
+                <li><a href="/blog">Blogs</a></li>
+                <li><a href="/forum">Foros</a></li>
+                <li><a href="/groups">Grupos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div style="max-width: 800px; margin: 40px auto; background: #222; padding: 30px; border-radius: 10px; border: 1px solid #444;">
+        <h2 style="color: #8a2be2; margin-top: 0;">Editar tu Perfil</h2>
+        <p style="color: #aaa; font-size: 0.9em;">Personaliza tu espacio. ¡Se permite código HTML y CSS!</p>
+        
+        <form action="/edit_profile" method="POST">
+            
+            <label style="font-weight: bold; color: #8a2be2;">Estado (Mood):</label><br>
+            <input type="text" name="estado" value="{{ datos[2] if datos[2] else '' }}" placeholder="Ej: Practicando combos..." style="width: 100%; padding: 10px; margin: 8px 0 20px 0; background: #333; color: white; border: 1px solid #555; border-radius: 5px;">
+            
+            <label style="font-weight: bold; color: #8a2be2;">Sobre mí (Biografía con HTML permitido):</label><br>
+            <textarea name="biografia" rows="6" placeholder="Escribe sobre ti o pega un iframe de YouTube/Spotify..." style="width: 100%; padding: 10px; margin: 8px 0 20px 0; background: #333; color: white; border: 1px solid #555; border-radius: 5px;">{{ datos[0] if datos[0] else '' }}</textarea>
+            
+            <label style="font-weight: bold; color: #8a2be2;">CSS Personalizado (Colores, fondos, estilo):</label><br>
+            <textarea name="css_personalizado" rows="8" placeholder="<style> body { background: url('tu-gif.gif'); } </style>" style="font-family: monospace; width: 100%; padding: 10px; margin: 8px 0 25px 0; background: #1a1a1a; color: #00ff00; border: 1px solid #555; border-radius: 5px;">{{ datos[1] if datos[1] else '' }}</textarea>
+            
+            <button type="submit" style="padding: 12px 25px; background: #8a2be2; color: white; border: none; font-weight: bold; border-radius: 5px; cursor: pointer;">Guardar Cambios</button>
+            <a href="/profile/{{ session['username'] }}" style="color: #aaa; margin-left: 15px; text-decoration: none;">Cancelar</a>
+        
+        </form>
+    </div>
+
+</body>
+</html>

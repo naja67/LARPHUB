@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Perfil de {{ perfil[0] }} - LARP HUB</title>
+    <link rel="stylesheet" href="../static/style.css">
+    
+    {% if perfil[5] %}
+        {{ perfil[5] | safe }}
+    {% endif %}
+</head>
+<body style="background-color: #111; color: white;">
+
+    <header class="top-header">
+        <div class="top-bar">
+            <div class="logo">
+                <img src="../static/o.png" alt="LARP Hub Logo" class="logo-img">
+            </div>
+            <div class="top-links">
+                {% if session['username'] %}
+                    <span style="color: white; font-weight: bold; margin-right: 15px;">
+                        Hola, {{ session['username'] }}
+                    </span>
+                    <a href="/logout" style="color: #ff4c4c;">Cerrar Sesión</a>
+                {% else %}
+                    <a href="/login">Iniciar Sesión</a>
+                    <a href="/register">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/browse">Explorar</a></li>
+                <li><a href="/messages">Mensajes</a></li>
+                <li><a href="/blog">Blogs</a></li>
+                <li><a href="/forum">Foros</a></li>
+                <li><a href="/groups">Grupos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="perfil-container" style="max-width: 800px; margin: 40px auto; background: rgba(30,30,30,0.9); padding: 30px; border-radius: 10px; color: white;">
+        
+        <h1>@{{ perfil[0] }}</h1>
+        
+        <div class="estado" style="margin-bottom: 20px; color: #ccc;">
+            💭 {{ perfil[2] or 'Sin estado' }}
+        </div>
+
+        <hr style="border-color: #444;">
+
+        <div class="biografia" style="margin-bottom: 30px;">
+            {{ perfil[1] | safe if perfil[1] else 'Aún no hay biografía escrita.' }}
+        </div>
+
+        {% if session['username'] == perfil[0] %}
+            <br>
+            <a href="/edit_profile" style="color: yellow; text-decoration: none; font-weight: bold;">[Editar mi perfil]</a>
+        {% endif %}
+    </div>
+
+</body>
+</html>

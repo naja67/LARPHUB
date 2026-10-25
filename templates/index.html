@@ -36,11 +36,53 @@
         <li><a href="/groups">Grupos</a></li>
     </ul>
 </nav>
+
+{% if session['username'] %}
+<div class="user-panel-container" style="border: 1px solid #7ea8f8; max-width: 350px; font-family: Verdana, sans-serif; margin: 20px 0 20px 40px; text-align: left;">
+    
+
+    <div style="background-color: #7600fd; color: white; padding: 6px 10px; font-weight: bold; font-size: 1.3em;">
+        Hola, {{ session['username'] }}!
+    </div>
+
+    <div style="background-color: #dceafe; padding: 12px; color: #ffffff;">
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+
+            <img src="../static/default.png" alt="Foto" style="width: 120px; height: 120px; border: 1px solid black; object-fit: cover;">
+            
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.9em; font-weight: bold;">
+                <a href="/edit_profile" style="color: #003399; text-decoration: none;">Editar Perfil</a>
+                <a href="#" style="color: #003399; text-decoration: none;">Editar Estado</a>
+                <a href="#" style="color: #003399; text-decoration: none;">Editar Enlaces</a>
+                <a href="#" style="color: #003399; text-decoration: none;">Añadir/Editar Foto</a>
+                <a href="#" style="color: #003399; text-decoration: none;">Administrar Blog</a>
+            </div>
+        </div>
+
+        <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 10px;">
+            <span style="color: black;">Ver mi:</span> 
+            <a href="/profile/{{ session['username'] }}" style="color: #003399; text-decoration: none;">Perfil</a> | 
+            <a href="/blog" style="color: #003399; text-decoration: none;">Blog</a> | 
+            <a href="/forum" style="color: #003399; text-decoration: none;">Foro</a> | 
+            <a href="/groups" style="color: #003399; text-decoration: none;">Grupos</a>
+        </div>
+
+        <div style="font-size: 0.85em; font-weight: bold;">
+            <span style="color: black;">Mi URL:</span> 
+            <a href="/profile/{{ session['username'] }}" style="color: #003399; text-decoration: none;">http://127.0.0.1:5000/profile/{{ session['username'] }}</a>
+        </div>
+
+    </div>
+</div>
+
+{% else %}
+    <div style="text-align: center; padding: 40px; color: white;">
+        <h1>¡Todos son bienvenidos aquí!</h1>
+        <p>Inicia sesión o regístrate para ver tu panel.</p>
+    </div>
+{% endif %}
     </header>
-    <main class="container">
-        <h2>Todos son bienvenidos aqui!</h2>
-    </main>
-    <script src="app.js"></script>
 </body>
 </html>
 
