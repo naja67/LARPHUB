@@ -2,14 +2,19 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from markupsafe import Markup
 import psycopg2
 import os
+import base64
+import mimetypes
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'llave_secreta_larphub'
+app.secret_key = os.environ.get('SECRET_KEY', 'llave_secreta_larphub')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 # Conexión exacta por Session Pooler (aws-1 IPv4 compatible con Render)
-DB_URI = "postgresql://postgres.tkklqctcddrvbhrehdwu:K9fWXp618zKt0Bgr@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+DB_URI = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres.tkklqctcddrvbhrehdwu:K9fWXp618zKt0Bgr@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+)
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -18,6 +23,29 @@ def get_db_connection():
         client_encoding='utf8'
     )
     return conn
+
+
+def archivo_a_base64(file_storage):
+    """Convierte un archivo subido en una cadena Data URI Base64 para guardarlo en Postgres."""
+    if not file_storage or file_storage.filename == '':
+        return None
+    mime_type = file_storage.mimetype
+    if not mime_type:
+        mime_type, _ = mimetypes.guess_type(file_storage.filename)
+    if not mime_type:
+        mime_type = 'application/octet-stream'
+    datos_binarios = file_storage.read()
+    b64_str = base64.b64encode(datos_binarios).decode('utf-8')
+    return f"data:{mime_type};base64,{b64_str}"
+
+
+def formatear_ruta_media(valor, default='avatar.png'):
+    """Devuelve la ruta lista para usar en HTML (soporta Base64, URLs externas y /static/)."""
+    if not valor:
+        return url_for('static', filename=default)
+    if valor.startswith(('data:', 'http://', 'https://', '/')):
+        return valor
+    return f"/static/{valor}"
 
 
 @app.context_processor
@@ -52,12 +80,7 @@ def inicio():
         cur.execute("SELECT foto_perfil FROM usuarios WHERE username = %s", (usuario_actual,))
         data_usuario = cur.fetchone()
         
-        if data_usuario and data_usuario[0]:
-            foto_val = data_usuario[0]
-            foto_path = foto_val if foto_val.startswith('/') else f"/static/{foto_val}"
-        else:
-            foto_path = url_for('static', filename='avatar.png')
-            
+        foto_path = formatear_ruta_media(data_usuario[0] if data_usuario else None)
         foto_usuario = (foto_path,)
 
         cur.execute("""
@@ -117,11 +140,7 @@ def inicio():
             else:
                 rel_autor = 'ninguna'
 
-            foto_aut_val = pub[5]
-            if foto_aut_val:
-                foto_autor_final = foto_aut_val if foto_aut_val.startswith('/') else f"/static/{foto_aut_val}"
-            else:
-                foto_autor_final = url_for('static', filename='avatar.png')
+            foto_autor_final = formatear_ruta_media(pub[5])
 
             publicaciones.append({
                 'id': pub_id,
@@ -159,11 +178,7 @@ def crear_publicacion():
     descripcion = request.form.get('descripcion', '').strip()
     
     if archivo and archivo.filename != '':
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        filename = secure_filename(archivo.filename)
-        ruta_guardado = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        archivo.save(ruta_guardado)
-        ruta_archivo = f"/static/uploads/{filename}"
+        ruta_archivo = archivo_a_base64(archivo)
         
         conn = get_db_connection()
         cur = conn.cursor()
@@ -490,11 +505,7 @@ def editar_perfil():
         ruta_foto = None
         
         if foto and foto.filename != '':
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            filename = secure_filename(foto.filename)
-            ruta_guardado = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            foto.save(ruta_guardado)
-            ruta_foto = f"/static/uploads/{filename}"
+            ruta_foto = archivo_a_base64(foto)
 
         try:
             if nuevo_username != usuario_actual:
@@ -662,11 +673,7 @@ def messages(destinatario):
             ruta_archivo = None
 
             if archivo and archivo.filename != '':
-                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                filename = secure_filename(archivo.filename)
-                ruta_guardado = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                archivo.save(ruta_guardado)
-                ruta_archivo = f"/static/uploads/{filename}"
+                ruta_archivo = archivo_a_base64(archivo)
 
             if contenido or ruta_archivo:
                 cur.execute("""
