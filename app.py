@@ -8,11 +8,8 @@ app = Flask(__name__)
 app.secret_key = 'llave_secreta_larphub'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-# Credenciales de Supabase
-DB_URI = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://postgres:K9fWXp618zKt0Bgr@db.tkklqctcddrvbhrehdwu.supabase.co:5432/postgres"
-)
+# Conexión directa por Session Pooler (IPv4 compatible con Render)
+DB_URI = "postgresql://postgres.tkklqctcddrvbhrehdwu:K9fWXp618zKt0Bgr@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -38,7 +35,7 @@ def inyectar_funciones_admin():
 
     def badge(username):
         if username in admins:
-            return Markup('<span style="background: #1a1a1a; color: #a855f7; border: 1px solid #3b1d5e; font-size: 0.75em; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: bold; vertical-align: middle; display: inline-flex; align-items: center; gap: 4px;" title="Creador de LARP HUB">🐈‍⬛ Creador</span>')
+            return Markup('<span style="background: #1a1a1a; color: #a855f7; border:1px solid #3b1d5e; font-size: 0.75em; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: bold; vertical-align: middle; display: inline-flex; align-items: center; gap: 4px;" title="Creador de LARP HUB">🐈‍⬛ Creador</span>')
         return ''
 
     es_creador = session.get('username') in admins
