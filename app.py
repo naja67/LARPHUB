@@ -7,17 +7,17 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'llave_secreta_larphub'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-DB_HOST = "localhost"
-DB_NAME = "larphub"
-DB_USER = "postgres"
-DB_PASS = "Milorayo2012!"
+
+# Credenciales de Supabase
+DB_URI = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:K9fWXp618zKt0Bgr@db.tkklqctcddrvbhrehdwu.supabase.co:5432/postgres"
+)
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASS,
+        DB_URI,
+        sslmode='require',
         client_encoding='utf8'
     )
     return conn
@@ -493,6 +493,7 @@ def editar_perfil():
         ruta_foto = None
         
         if foto and foto.filename != '':
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             filename = secure_filename(foto.filename)
             ruta_guardado = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             foto.save(ruta_guardado)
@@ -664,6 +665,7 @@ def messages(destinatario):
             ruta_archivo = None
 
             if archivo and archivo.filename != '':
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 filename = secure_filename(archivo.filename)
                 ruta_guardado = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 archivo.save(ruta_guardado)
