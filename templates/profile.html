@@ -1,62 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <title>Perfil de {{ perfil[0] }} - LARP HUB</title>
-    <link rel="stylesheet" href="../static/style.css">
+    <meta charset="UTF-8">
+    <title>Perfil de @{{ perfil[0] }} - LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
     {% if perfil[5] %}
         {{ perfil[5] | safe }}
     {% endif %}
 </head>
-<body style="background-color: #111; color: white;">
+<body style="background-color: #111; color: white; margin: 0; padding: 0;">
 
-    <header class="top-header">
-        <div class="top-bar">
+    <header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+        <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
             <div class="logo">
-                <img src="../static/o.png" alt="LARP Hub Logo" class="logo-img">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='o.png') }}" alt="LARP Hub Logo" class="logo-img">
+                </a>
             </div>
-            <div class="top-links">
+
+            <form action="/search" method="GET" style="display: flex; align-items: center; background: #1a1a1a; border: 1px solid #444; border-radius: 20px; padding: 3px 10px; margin: 0;">
+                <input type="text" name="q" placeholder="Buscar usuarios..." required style="border: none; background: transparent; color: white; outline: none; font-size: 0.85em; padding: 4px; width: 160px;">
+                <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center;" title="Buscar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: 0.2s;" onmouseover="this.style.stroke='#8a2be2'" onmouseout="this.style.stroke='#ccc'">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="top-links" style="display: flex; align-items: center;">
                 {% if session['username'] %}
-                    <span style="color: white; font-weight: bold; margin-right: 15px;">
-                        Hola, {{ session['username'] }}
+                    <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">
+                        Hola, {{ session['username'] }} {{ badge(session['username']) }}
                     </span>
-                    <a href="/logout" style="color: #ff4c4c;">Cerrar Sesión</a>
+                    <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
                 {% else %}
-                    <a href="/login">Iniciar Sesión</a>
-                    <a href="/register">Registrarse</a>
+                    <a href="/login" style="color: white; text-decoration: none; margin-right: 10px;">Iniciar Sesión</a>
+                    <a href="/register" style="color: white; text-decoration: none;">Registrarse</a>
                 {% endif %}
             </div>
         </div>
-        <nav class="main-nav">
-            <ul>
-                <li><a href="/">Inicio</a></li>
-                <li><a href="/browse">Explorar</a></li>
-                <li><a href="/messages">Mensajes</a></li>
-                <li><a href="/blog">Blogs</a></li>
-                <li><a href="/forum">Foros</a></li>
-                <li><a href="/groups">Grupos</a></li>
+
+        <nav class="main-nav" style="border-top: 1px solid #333;">
+            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px; align-items: center;">
+                <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
+                <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
+                <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
+                <li style="margin-right: 20px;"><a href="/blog" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
+                <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
+                <li style="margin-right: 20px;"><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+                {% if es_creador %}
+                    <li><a href="/admin" style="color: #ec4899; font-weight: bold; text-decoration: none; font-size: 13px;">🛡️ Panel Admin</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
 
-    <div class="perfil-container" style="max-width: 800px; margin: 40px auto; background: rgba(30,30,30,0.9); padding: 30px; border-radius: 10px; color: white;">
+    <div class="perfil-container" style="max-width: 800px; margin: 40px auto; background: rgba(30,30,30,0.9); padding: 30px; border-radius: 10px; color: white; border: 1px solid #333;">
         
-        <h1>@{{ perfil[0] }}</h1>
+        <div style="margin-bottom: 15px;">
+            <img src="{{ perfil[3] if perfil[3] else url_for('static', filename='avatar.png') }}" alt="Foto de perfil" style="width: 150px; height: 150px; border-radius: 10px; object-fit: cover; border: 2px solid #8a2be2;">
+        </div>   
         
-        <div class="estado" style="margin-bottom: 20px; color: #ccc;">
+        <h1 style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span>@{{ perfil[0] }}</span>
+            {{ badge(perfil[0]) }}
+        </h1>
+        
+        <div class="estado" style="margin-bottom: 15px; color: #ccc;">
             💭 {{ perfil[2] or 'Sin estado' }}
         </div>
 
-        <hr style="border-color: #444;">
+        {% if session['username'] and session['username'] != perfil[0] %}
+            <div style="margin: 15px 0 20px 0;">
+                {% if estado_amistad == 'amigos' %}
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="background: #1a1a1a; border: 1px solid #a855f7; color: #a855f7; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold;">
+                            ✔ Son amigos
+                        </span>
+                        <form action="/responder_solicitud/{{ solicitud_id }}/rechazar" method="POST" style="margin: 0;">
+                            <button type="submit" style="background: transparent; color: #ff4c4c; border: 1px solid #ff4c4c; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">Eliminar amigo</button>
+                        </form>
+                    </div>
+                {% elif estado_amistad == 'enviada' %}
+                    <span style="background: #222; border: 1px solid #444; color: #aaa; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; display: inline-block;">
+                        ⏳ Solicitud enviada
+                    </span>
+                {% elif estado_amistad == 'recibida' %}
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <form action="/responder_solicitud/{{ solicitud_id }}/aceptar" method="POST" style="margin: 0;">
+                            <button type="submit" style="background: #a855f7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em;">Aceptar solicitud</button>
+                        </form>
+                        <form action="/responder_solicitud/{{ solicitud_id }}/rechazar" method="POST" style="margin: 0;">
+                            <button type="submit" style="background: #333; color: #ff4c4c; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">Rechazar</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <form action="/enviar_solicitud/{{ perfil[0] }}" method="POST" style="margin: 0;">
+                        <button type="submit" style="background: #a855f7; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em;">
+                            + Añadir a Amigos
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
 
-        <div class="biografia" style="margin-bottom: 30px;">
+        {% if session['username'] == perfil[0] %}
+            <div style="margin-bottom: 15px;">
+                <a href="/edit_profile" style="color: #a855f7; text-decoration: none; font-weight: bold; font-size: 0.9em;">[✏️ Editar mi perfil]</a>
+            </div>
+        {% endif %}
+
+        <hr style="border-color: #444; margin: 20px 0;">
+
+        <div class="biografia" style="margin-bottom: 30px; line-height: 1.5;">
             {{ perfil[1] | safe if perfil[1] else 'Aún no hay biografía escrita.' }}
         </div>
 
-        {% if session['username'] == perfil[0] %}
-            <br>
-            <a href="/edit_profile" style="color: yellow; text-decoration: none; font-weight: bold;">[Editar mi perfil]</a>
-        {% endif %}
+        <div style="border: 1px solid #333; background-color: #121212; border-radius: 6px; overflow: hidden; margin-top: 25px;">
+            <div style="background-color: #1a1a1a; color: #fff; padding: 10px 15px; font-weight: bold; font-size: 0.95em; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                <span>Amigos de @{{ perfil[0] }}</span>
+                <span style="color: #a855f7;">({{ amigos|length if amigos else 0 }})</span>
+            </div>
+
+            <div style="padding: 15px;">
+                {% if amigos %}
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 15px; text-align: center;">
+                        {% for amigo in amigos %}
+                            <a href="/profile/{{ amigo[0] }}" style="text-decoration: none; color: #a855f7; display: flex; flex-direction: column; align-items: center;">
+                                <img src="{{ amigo[1] if amigo[1] else url_for('static', filename='avatar.png') }}" alt="{{ amigo[0] }}" style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #444; border-radius: 6px; margin-bottom: 6px;">
+                                <span style="font-size: 0.8em; font-weight: bold; word-break: break-all;">@{{ amigo[0] }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: #777; font-size: 0.85em; margin: 0;">Este usuario aún no tiene amigos agregados.</p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
 </body>

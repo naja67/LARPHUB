@@ -1,88 +1,375 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Larp Hub</title>
-    <link rel="stylesheet" href="../static/style.css">
+    <title>Inicio - LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <header class="top-header">
-        <div class="top-bar">
-    <div class ="logo">
-    <img src="../static/o.png" alt="LARP Hub Logo" class="logo-img">
+<body style="background-color: #111; color: white; margin: 0; padding: 0;">
+
+<header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+    <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
+        
+        <div class="logo">
+            <a href="/">
+                <img src="{{ url_for('static', filename='o.png') }}" alt="LARP Hub Logo" class="logo-img">
+            </a>
+        </div>
+
+        <form action="/search" method="GET" style="display: flex; align-items: center; background: #1a1a1a; border: 1px solid #444; border-radius: 20px; padding: 3px 10px; margin: 0;">
+            <input type="text" name="q" placeholder="Buscar usuarios..." required style="border: none; background: transparent; color: white; outline: none; font-size: 0.85em; padding: 4px; width: 160px;">
+            <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center;" title="Buscar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </form>
+
+        <div class="top-links" style="display: flex; align-items: center;">
+            {% if session['username'] %}
+                <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">
+                    Hola, {{ session['username'] }} {{ badge(session['username']) }}
+                </span>
+                <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
+            {% else %}
+                <a href="/login" style="color: white; text-decoration: none; margin-right: 10px;">Iniciar Sesión</a>
+                <a href="/register" style="color: white; text-decoration: none;">Registrarse</a>
+            {% endif %}
+        </div>
     </div>
-<div class="top-links">
-    {% if session['username'] %}
-        <span style="color: white; font-weight: bold; margin-right: 15px;">
-            Hola, {{ session['username'] }}
-        </span>
-        <a href="/logout" style="color: #ff4c4c;">Cerrar Sesión</a>
-    {% else %}
-        <a href="/login">Iniciar Sesión</a>
-        <a href="/register">Registrarse</a>
-    {% endif %}
-</div>
-</div>
 
-
-<nav class="main-nav">
-    <ul>
-        <li><a href="/" class="active">Inicio</a></li>
-        <li><a href="/browse">Explorar</a></li>
-        <li><a href="/messages">Mensajes</a></li>
-        <li><a href="/blog">Blogs</a></li>
-        <li><a href="/forum">Foros</a></li>
-        <li><a href="/groups">Grupos</a></li>
-    </ul>
-</nav>
+    <nav class="main-nav" style="border-top: 1px solid #333;">
+        <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px; align-items: center;">
+            <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
+            <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
+            <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
+            <li style="margin-right: 20px;"><a href="/blog" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
+            <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
+            <li style="margin-right: 20px;"><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+            {% if es_creador %}
+                <li><a href="/admin" style="color: #ec4899; font-weight: bold; text-decoration: none; font-size: 13px;">🛡️ Panel Admin</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>
 
 {% if session['username'] %}
-<div class="user-panel-container" style="border: 1px solid #7ea8f8; max-width: 350px; font-family: Verdana, sans-serif; margin: 20px 0 20px 40px; text-align: left;">
-    
+<!-- CONTENEDOR GRID PRINCIPAL -->
+<div style="display: grid; grid-template-columns: 280px 520px; justify-content: center; gap: 30px; margin: 20px auto; max-width: 860px;">
 
-    <div style="background-color: #7600fd; color: white; padding: 6px 10px; font-weight: bold; font-size: 1.3em;">
-        Hola, {{ session['username'] }}!
-    </div>
-
-    <div style="background-color: #dceafe; padding: 12px; color: #ffffff;">
-        
-        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-
-            <img src="../static/default.png" alt="Foto" style="width: 120px; height: 120px; border: 1px solid black; object-fit: cover;">
+    <!-- COLUMNA IZQUIERDA: PERFIL Y SOLICITUDES -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="user-panel-container" style="border: 1px solid #333; font-family: Arial, sans-serif; text-align: left; background-color: #121212; border-radius: 4px; overflow: hidden;">
             
-            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.9em; font-weight: bold;">
-                <a href="/edit_profile" style="color: #003399; text-decoration: none;">Editar Perfil</a>
-                <a href="#" style="color: #003399; text-decoration: none;">Editar Estado</a>
-                <a href="#" style="color: #003399; text-decoration: none;">Editar Enlaces</a>
-                <a href="#" style="color: #003399; text-decoration: none;">Añadir/Editar Foto</a>
-                <a href="#" style="color: #003399; text-decoration: none;">Administrar Blog</a>
+            <div style="background-color: #1a1a1a; color: #fff; padding: 8px 12px; font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">
+                <span>Hola, {{ session['username'] }}!</span>
+                {{ badge(session['username']) }}
+            </div>
+
+            <div style="background-color: #121212; padding: 15px; color: #fff;">
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
+                    <img src="{{ foto[0] if foto and foto[0] else url_for('static', filename='avatar.png') }}" alt="Avatar" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #444;">
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.9em; font-weight: bold;">
+                        <a href="/edit_profile" style="color: #a855f7; text-decoration: none;">Editar Perfil</a>
+                        <a href="#" style="color: #a855f7; text-decoration: none;">Administrar Blog</a>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 10px; border-top: 1px solid #222; padding-top: 10px;">
+                    <span style="color: #888;">Ver mi:</span>
+                    <a href="/profile/{{ session['username'] }}" style="color: #a855f7; text-decoration: none;">Perfil</a> |
+                    <a href="/blog" style="color: #a855f7; text-decoration: none;">Blog</a> |
+                    <a href="/forum" style="color: #a855f7; text-decoration: none;">Foro</a> |
+                    <a href="/groups" style="color: #a855f7; text-decoration: none;">Grupos</a>
+                </div>
+
+                <div style="font-size: 0.8em; font-weight: bold; word-break: break-all; margin-bottom: 12px;">
+                    <span style="color: #888;">Mi URL:</span><br>
+                    <a href="/profile/{{ session['username'] }}" style="color: #a855f7; text-decoration: none;">http://127.0.0.1:5000/profile/{{ session['username'] }}</a>
+                </div>
+
+                <div style="border-top: 1px solid #222; padding-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85em; font-weight: bold;">
+                        <span style="color: #888;">Mis Amigos ({{ amigos|length if amigos else 0 }}):</span>
+                        <a href="/friends" style="color: #a855f7; text-decoration: none; font-size: 0.9em;">Ver todos</a>
+                    </div>
+
+                    {% if amigos %}
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center;">
+                            {% for amigo in amigos[:8] %}
+                                <a href="/profile/{{ amigo[0] }}" style="text-decoration: none; color: #a855f7; display: flex; flex-direction: column; align-items: center;">
+                                    <img src="{{ amigo[1] if amigo[1] else url_for('static', filename='avatar.png') }}" alt="{{ amigo[0] }}" style="width: 45px; height: 45px; object-fit: cover; border: 1px solid #444; border-radius: 4px; margin-bottom: 3px;">
+                                    <span style="font-size: 0.65em; font-weight: bold; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ amigo[0] }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p style="color: #666; font-size: 0.8em; margin: 0;">Aún no tienes amigos agregados.</p>
+                    {% endif %}
+                </div>
+
             </div>
         </div>
 
-        <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 10px;">
-            <span style="color: black;">Ver mi:</span> 
-            <a href="/profile/{{ session['username'] }}" style="color: #003399; text-decoration: none;">Perfil</a> | 
-            <a href="/blog" style="color: #003399; text-decoration: none;">Blog</a> | 
-            <a href="/forum" style="color: #003399; text-decoration: none;">Foro</a> | 
-            <a href="/groups" style="color: #003399; text-decoration: none;">Grupos</a>
+        {% if solicitudes %}
+        <div style="border: 1px solid #333; width: 100%; font-family: Arial, sans-serif; background-color: #121212; border-radius: 4px; overflow: hidden;">
+            <div style="background-color: #1a1a1a; color: #fff; padding: 8px 12px; font-weight: bold; font-size: 0.95em; border-bottom: 1px solid #333; display: flex; justify-content: space-between;">
+                <span>Solicitudes de amistad</span>
+                <span style="color: #a855f7;">({{ solicitudes|length }})</span>
+            </div>
+            <div style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                {% for sol in solicitudes %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 8px;">
+                        <a href="/profile/{{ sol[1] }}" style="color: #a855f7; text-decoration: none; font-weight: bold; font-size: 0.85em; display: flex; align-items: center; gap: 8px;">
+                            <img src="{{ sol[2] if sol[2] else url_for('static', filename='avatar.png') }}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #444;">
+                            <span>@{{ sol[1] }}</span>
+                        </a>
+                        <div style="display: flex; gap: 4px;">
+                            <form action="/responder_solicitud/{{ sol[0] }}/aceptar" method="POST" style="margin: 0;">
+                                <button type="submit" style="background: #a855f7; color: white; border: none; padding: 4px 7px; border-radius: 3px; cursor: pointer; font-size: 0.75em; font-weight: bold;" title="Aceptar">✔</button>
+                            </form>
+                            <form action="/responder_solicitud/{{ sol[0] }}/rechazar" method="POST" style="margin: 0;">
+                                <button type="submit" style="background: #222; color: #ff4c4c; border: 1px solid #444; padding: 4px 7px; border-radius: 3px; cursor: pointer; font-size: 0.75em;" title="Rechazar">✖</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- COLUMNA DERECHA: FEED DE PUBLICACIONES -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- CAJA PARA SUBIR PUBLICACIÓN -->
+        <div style="background-color: #121212; border: 1px solid #333; border-radius: 6px; padding: 15px;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: #a855f7; font-size: 0.95em;">📸 Crear nueva publicación</div>
+            <form action="/crear_publicacion" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px; margin: 0;">
+                <textarea name="descripcion" rows="2" placeholder="Escribe un pie de foto..." style="width: 100%; background: #1a1a1a; border: 1px solid #333; color: white; padding: 8px 10px; border-radius: 4px; resize: none; outline: none; font-family: Arial, sans-serif; box-sizing: border-box;"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="cursor: pointer; background: #1a1a1a; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; color: #ccc;">
+                        📎 <span id="archivo-post-nombre">Seleccionar Foto / Video / GIF</span>
+                        <input type="file" name="archivo" accept="image/*,video/*" required style="display: none;" onchange="document.getElementById('archivo-post-nombre').innerText = this.files[0] ? this.files[0].name : 'Seleccionar Foto / Video / GIF';">
+                    </label>
+                    <button type="submit" style="background: #a855f7; color: white; border: none; padding: 7px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Publicar</button>
+                </div>
+            </form>
         </div>
 
-        <div style="font-size: 0.85em; font-weight: bold;">
-            <span style="color: black;">Mi URL:</span> 
-            <a href="/profile/{{ session['username'] }}" style="color: #003399; text-decoration: none;">http://127.0.0.1:5000/profile/{{ session['username'] }}</a>
-        </div>
+        <!-- LISTA DE PUBLICACIONES -->
+        {% if publicaciones %}
+            {% for pub in publicaciones %}
+                <div style="background-color: #0c0c0c; border: 1px solid #262626; border-radius: 8px; overflow: hidden; color: white;">
+                    
+                    <!-- CABECERA DEL POST -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px;">
+                        <a href="/profile/{{ pub.autor }}" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: white;">
+                            <img src="{{ pub.foto_autor if pub.foto_autor else url_for('static', filename='avatar.png') }}" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #444;">
+                            <div>
+                                <div style="font-weight: bold; font-size: 0.9em;">
+                                    {{ pub.autor }} {{ badge(pub.autor) }} 
+                                    <span style="color: #777; font-weight: normal; font-size: 0.85em;">• {{ pub.fecha }}</span>
+                                </div>
+                                <div style="font-size: 0.75em; color: #aaa;">Sugerencia para ti</div>
+                            </div>
+                        </a>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            {% if pub.autor == session['username'] or es_creador %}
+                                <form action="/eliminar_publicacion/{{ pub.id }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta publicación?');">
+                                    <button type="submit" style="background: none; border: none; color: #ff4c4c; cursor: pointer; font-size: 0.8em; font-weight: bold;" title="Eliminar publicación">🗑️ Eliminar</button>
+                                </form>
+                            {% endif %}
+
+                            {% if pub.autor != session['username'] %}
+                                {% if pub.rel_autor == 'ninguna' %}
+                                    <form action="/enviar_solicitud/{{ pub.autor }}" method="POST" style="margin: 0;">
+                                        <button type="submit" style="background-color: #262626; color: white; border: 1px solid #363636; padding: 6px 14px; border-radius: 8px; font-weight: bold; font-size: 0.8em; cursor: pointer;">Agregar amigo</button>
+                                    </form>
+                                {% elif pub.rel_autor == 'pendiente' %}
+                                    <span style="background: #1a1a1a; color: #888; border: 1px solid #333; padding: 5px 10px; border-radius: 8px; font-size: 0.8em;">Pendiente</span>
+                                {% elif pub.rel_autor == 'amigos' %}
+                                    <span style="background: #1a1a1a; color: #a855f7; border: 1px solid #3b1d5e; padding: 5px 10px; border-radius: 8px; font-size: 0.8em; font-weight: bold;">✔ Amigos</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ARCHIVO MULTIMEDIA -->
+                    <div style="width: 100%; background-color: #000; display: flex; justify-content: center; align-items: center; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a;">
+                        {% set ext = pub.archivo | lower %}
+                        {% if ext.endswith(('.mp4', '.webm', '.ogg', '.mov')) %}
+                            <video controls style="width: 100%; max-height: 550px; object-fit: contain; display: block;">
+                                <source src="{{ pub.archivo }}">
+                            </video>
+                        {% else %}
+                            <img src="{{ pub.archivo }}" alt="Post" style="width: 100%; max-height: 550px; object-fit: contain; display: block;">
+                        {% endif %}
+                    </div>
+
+                    <!-- BOTONES DE ACCIÓN -->
+                    <div style="display: flex; align-items: center; gap: 18px; padding: 12px 15px 8px 15px;">
+                        
+                        <!-- BOTÓN DE LIKE -->
+                        <button type="button" onclick="darLike('{{ pub.id }}', this)" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.95em; font-weight: bold; padding: 0;">
+                            <svg id="corazon-{{ pub.id }}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="{{ '#ff3040' if pub.dio_like else 'none' }}" stroke="{{ '#ff3040' if pub.dio_like else 'white' }}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <span id="contador-likes-{{ pub.id }}">{{ pub.likes }}</span>
+                        </button>
+
+                        <button type="button" onclick="document.getElementById('input-com-{{ pub.id }}').focus();" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.95em; font-weight: bold; padding: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>{{ pub.comentarios|length }}</span>
+                        </button>
+
+                        <button type="button" onclick="const c = document.getElementById('compartir-{{ pub.id }}'); c.style.display = (c.style.display === 'none' ? 'block' : 'none');" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.95em; font-weight: bold; padding: 0;" title="Enviar por chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
+
+                    <!-- DESCRIPCIÓN -->
+                    {% if pub.descripcion %}
+                        <div style="padding: 0 15px 10px 15px; font-size: 0.9em; line-height: 1.4;">
+                            <a href="/profile/{{ pub.autor }}" style="color: white; font-weight: bold; text-decoration: none; margin-right: 5px;">{{ pub.autor }} {{ badge(pub.autor) }}</a>
+                            <span>{{ pub.descripcion }}</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- ENVIAR POR CHAT -->
+                    <div id="compartir-{{ pub.id }}" style="display: none; padding: 10px 15px; background-color: #161616; border-top: 1px solid #262626;">
+                        {% if amigos %}
+                            <form onsubmit="compartirPost('{{ pub.id }}', event)" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                <span style="font-size: 0.8em; color: #aaa;">Enviar a:</span>
+                                <select id="select-destino-{{ pub.id }}" name="destinatario" required style="flex: 1; background: #222; color: white; border: 1px solid #444; padding: 5px 8px; border-radius: 4px; outline: none;">
+                                    {% for amigo in amigos %}
+                                        <option value="{{ amigo[0] }}">@{{ amigo[0] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" style="background: #a855f7; color: white; border: none; padding: 5px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8em;">Enviar</button>
+                            </form>
+                        {% else %}
+                            <span style="font-size: 0.8em; color: #777;">Agrega amigos para compartirles publicaciones por chat.</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- COMENTARIOS -->
+                    <div style="padding: 10px 15px 12px 15px; border-top: 1px solid #1a1a1a;">
+                        <div id="lista-comentarios-{{ pub.id }}" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
+                            {% if pub.comentarios %}
+                                {% for com in pub.comentarios %}
+                                    <div id="comentario-item-{{ com[3] }}" style="font-size: 0.85em; display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <a href="/profile/{{ com[0] }}" style="color: #a855f7; font-weight: bold; text-decoration: none; margin-right: 5px;">{{ com[0] }} {{ badge(com[0]) }}</a>
+                                            <span style="color: #ddd;">{{ com[1] }}</span>
+                                            <span style="color: #666; font-size: 0.75em; margin-left: 6px;">{{ com[2] }}</span>
+                                        </div>
+                                        {% if es_creador or com[0] == session['username'] %}
+                                            <button type="button" onclick="eliminarComentario('{{ com[3] }}')" style="background: none; border: none; color: #ff4c4c; cursor: pointer; font-size: 0.75em;" title="Borrar comentario">🗑️</button>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- COMENTAR -->
+                        <form onsubmit="enviarComentario('{{ pub.id }}', event)" style="display: flex; gap: 8px; margin: 0;">
+                            <input id="input-com-{{ pub.id }}" type="text" name="comentario" placeholder="Añade un comentario..." required autocomplete="off" style="flex: 1; background: #161616; border: 1px solid #2a2a2a; color: white; padding: 7px 10px; border-radius: 4px; outline: none; font-size: 0.85em;">
+                            <button type="submit" style="background: none; border: none; color: #a855f7; font-weight: bold; cursor: pointer; font-size: 0.85em;">Publicar</button>
+                        </form>
+                    </div>
+
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="background-color: #121212; border: 1px solid #333; border-radius: 6px; padding: 25px; text-align: center; color: #777; font-size: 0.9em;">
+                Aún no hay publicaciones. ¡Sube la primera arriba!
+            </div>
+        {% endif %}
 
     </div>
-</div>
 
+</div>
 {% else %}
     <div style="text-align: center; padding: 40px; color: white;">
         <h1>¡Todos son bienvenidos aquí!</h1>
         <p>Inicia sesión o regístrate para ver tu panel.</p>
     </div>
 {% endif %}
-    </header>
+
+<script>
+    async function darLike(pubId, btn) {
+        try {
+            const response = await fetch('/like/' + pubId, { method: 'POST' });
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('contador-likes-' + pubId).innerText = data.total_likes;
+                const corazon = document.getElementById('corazon-' + pubId);
+                if (data.dio_like) {
+                    corazon.setAttribute('fill', '#ff3040');
+                    corazon.setAttribute('stroke', '#ff3040');
+                } else {
+                    corazon.setAttribute('fill', 'none');
+                    corazon.setAttribute('stroke', 'white');
+                }
+            }
+        } catch (e) { console.error('Error al dar like:', e); }
+    }
+
+    async function enviarComentario(pubId, event) {
+        event.preventDefault();
+        const input = document.getElementById('input-com-' + pubId);
+        const texto = input.value.trim();
+        if (!texto) return;
+
+        const formData = new FormData();
+        formData.append('comentario', texto);
+
+        try {
+            const response = await fetch('/comentar/' + pubId, {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                location.reload(); // Recarga para renderizar correctamente la insignia del nuevo comentario si aplica
+            }
+        } catch (e) { console.error('Error al comentar:', e); }
+    }
+
+    async function eliminarComentario(comId) {
+        if (!confirm('¿Deseas eliminar este comentario?')) return;
+        try {
+            const response = await fetch('/admin/eliminar_comentario/' + comId, { method: 'POST' });
+            if (response.ok) {
+                const item = document.getElementById('comentario-item-' + comId);
+                if (item) item.remove();
+            }
+        } catch (e) {
+            console.error('Error al eliminar comentario:', e);
+        }
+    }
+
+    async function compartirPost(pubId, event) {
+        event.preventDefault();
+        const select = document.getElementById('select-destino-' + pubId);
+        const destinatario = select.value;
+
+        const formData = new FormData();
+        formData.append('destinatario', destinatario);
+
+        try {
+            const response = await fetch('/compartir_post/' + pubId, {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('¡Publicación enviada al chat de @' + destinatario + ' con éxito! 📲');
+                document.getElementById('compartir-' + pubId).style.display = 'none';
+            }
+        } catch (e) { console.error('Error al compartir:', e); }
+    }
+</script>
+
 </body>
 </html>
-

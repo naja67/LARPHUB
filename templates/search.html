@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Resultados de Búsqueda - LARP HUB</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body style="background-color: #111; color: white;">
+<header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+    <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
+        
+        <div class="logo">
+            <a href="/">
+                <img src="../static/o.png" alt="LARP Hub Logo" class="logo-img">
+            </a>
+        </div>
+
+        <form action="/search" method="GET" style="display: flex; align-items: center; background: #1a1a1a; border: 1px solid #444; border-radius: 20px; padding: 3px 10px; margin: 0;">
+            <input type="text" name="q" placeholder="Buscar usuarios..." required style="border: none; background: transparent; color: white; outline: none; font-size: 0.85em; padding: 4px; width: 160px;">
+            <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center;" title="Buscar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </form>
+
+        <div class="top-links" style="display: flex; align-items: center;">
+            {% if session['username'] %}
+                <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">
+                    Hola, {{ session['username'] }}
+                </span>
+                <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
+            {% else %}
+                <a href="/login" style="color: white; text-decoration: none; margin-right: 10px;">Iniciar Sesión</a>
+                <a href="/register" style="color: white; text-decoration: none;">Registrarse</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <nav class="main-nav" style="border-top: 1px solid #333;">
+        <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px;">
+            <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
+            <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
+            <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
+            <li style="margin-right: 20px;"><a href="/blogs" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
+            <li style="margin-right: 20px;"><a href="/forums" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
+            <li><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+        </ul>
+    </nav>
+</header>
+    <div style="max-width: 800px; margin: 40px auto; background: rgba(30,30,30,0.9); padding: 30px; border-radius: 10px; border: 1px solid #444;">
+        <h2 style="color: #8a2be2;">Resultados para: "{{ query }}"</h2>
+        
+        <div style="margin-top: 20px;">
+            {% if resultados %}
+                {% for user in resultados %}
+                <div style="display: flex; align-items: center; margin-bottom: 15px; padding: 10px; background: #222; border-radius: 5px;">
+                    <img src="{{ user[1] if user[1] else '/static/default.png' }}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover; margin-right: 15px;">
+                    <div>
+                        <a href="/profile/{{ user[0] }}" style="color: white; font-weight: bold; font-size: 1.2em; text-decoration: none;">@{{ user[0] }}</a>
+                        <p style="color: #aaa; margin: 5px 0 0 0; font-size: 0.9em;">💭 {{ user[2] or 'Sin estado' }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #ccc;">No se encontraron usuarios con ese nombre.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

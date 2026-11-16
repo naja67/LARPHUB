@@ -6,15 +6,17 @@
 }
 
 body {
-    background-color: #e5e5e5;
-    color: #333;
+    background-color: #111111;
+    color: white;
+    margin: 0;
+    padding: 0;
 }
 
 .top-header {
     background-color: #000000;
     color: white;
-    width: 900px;
-    margin: 0 auto;
+    width: 900px;        /* Ancho fijo de 900px para que no ocupe toda la pantalla */
+    margin: 0 auto;      /* Centrado automático */
 }
 
 .top-bar {
@@ -23,17 +25,16 @@ body {
     justify-content: space-between;
     align-items: center;
     height: 50px;
-    padding: 0 10px 0 0;
+    padding: 0 10px;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    height: 100%;
 }
 
 .logo-img {
-    height: 150%;
+    height: 75px; 
     width: auto;
     object-fit: contain;
     display: block;
@@ -54,13 +55,13 @@ body {
 
 .main-nav {
     background-color: #000000;
-    border-top: 1px solid #ffffff;
-    border-bottom: 1px solid #ffffff;
+    border-top: none;
+    border-bottom: none;
 }
 
 .main-nav ul {
-    width: 900px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     list-style: none;
     display: flex;
     padding: 5px 10px;
@@ -82,12 +83,14 @@ body {
 }
 
 .container {
+    background-color: #121212; 
+    color: white;
     width: 900px;
     margin: 20px auto;
-    background: white;
+    border: 1px solid #333;
+    border-radius: 4px;
     padding: 20px;
-    border: 1px solid #ccc;
- }
+}
 /* BOTONES INICIAR SESIÓN Y REGISTRARSE */
 
 .auth-form {

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración - LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .admin-section {
+            background-color: #121212;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .admin-title {
+            color: #a855f7;
+            margin-top: 0;
+            border-bottom: 1px solid #262626;
+            padding-bottom: 10px;
+            font-size: 1.2em;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        .admin-table th, .admin-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+        .admin-table th {
+            color: #888;
+            font-weight: bold;
+        }
+        .btn-danger {
+            background-color: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+        .btn-danger:hover {
+            background-color: #d93636;
+        }
+    </style>
+</head>
+<body style="background-color: #111; color: white; margin: 0; padding: 0; font-family: Arial, sans-serif;">
+
+    <header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+        <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
+            <div class="logo">
+                <a href="/"><img src="{{ url_for('static', filename='o.png') }}" alt="LARP Hub Logo" class="logo-img"></a>
+            </div>
+            <div class="top-links" style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-weight: bold; font-size: 0.9em;">Hola, {{ session['username'] }} {{ badge(session['username']) }}</span>
+                <a href="/" style="color: #a855f7; text-decoration: none; font-size: 0.9em; font-weight: bold;">⬅ Volver al Inicio</a>
+            </div>
+        </div>
+    </header>
+
+    <div style="width: 900px; margin: 25px auto;">
+        <h1 style="color: white; font-size: 1.5em; margin-bottom: 20px;">🛡️ Panel de Control del Creador</h1>
+
+        <!-- GESTIÓN DE CUENTAS -->
+        <div class="admin-section">
+            <h2 class="admin-title">👥 Usuarios Registrados ({{ usuarios|length }})</h2>
+            <div style="max-height: 280px; overflow-y: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td>#{{ u[0] }}</td>
+                            <td style="display: flex; align-items: center; gap: 8px;">
+                                <img src="{{ u[2] if u[2] else url_for('static', filename='avatar.png') }}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+                                <a href="/profile/{{ u[1] }}" style="color: white; text-decoration: none; font-weight: bold;">@{{ u[1] }}</a>
+                                {{ badge(u[1]) }}
+                            </td>
+                            <td style="color: #aaa;">{{ u[3] if u[3] else 'Sin estado' }}</td>
+                            <td>
+                                {% if not u[4] %}
+                                <form action="/admin/eliminar_usuario/{{ u[1] }}" method="POST" style="margin: 0;" onsubmit="return confirm('⚠️ ¿Estás seguro de eliminar permanentemente la cuenta de @{{ u[1] }} y todo su contenido?');">
+                                    <button type="submit" class="btn-danger">🗑️ Borrar Cuenta</button>
+                                </form>
+                                {% else %}
+                                <span style="color: #666; font-size: 0.8em;">Protegido</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- GESTIÓN DE PUBLICACIONES -->
+        <div class="admin-section">
+            <h2 class="admin-title">📸 Todas las Publicaciones ({{ publicaciones|length }})</h2>
+            <div style="max-height: 280px; overflow-y: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Autor</th>
+                            <th>Descripción</th>
+                            <th>Archivo</th>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in publicaciones %}
+                        <tr>
+                            <td>#{{ p[0] }}</td>
+                            <td><b>@{{ p[1] }}</b> {{ badge(p[1]) }}</td>
+                            <td>{{ p[2] if p[2] else 'Sin descripción' }}</td>
+                            <td><a href="{{ p[3] }}" target="_blank" style="color: #a855f7;">Ver archivo</a></td>
+                            <td style="color: #777;">{{ p[4] }}</td>
+                            <td>
+                                <form action="/admin/eliminar_publicacion/{{ p[0] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Eliminar esta publicación?');">
+                                    <button type="submit" class="btn-danger">🗑️ Borrar Post</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- GESTIÓN DE COMENTARIOS -->
+        <div class="admin-section">
+            <h2 class="admin-title">💬 Todos los Comentarios ({{ comentarios|length }})</h2>
+            <div style="max-height: 280px; overflow-y: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Post ID</th>
+                            <th>Autor</th>
+                            <th>Comentario</th>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in comentarios %}
+                        <tr>
+                            <td>#{{ c[0] }}</td>
+                            <td>Post #{{ c[1] }}</td>
+                            <td><b>@{{ c[2] }}</b> {{ badge(c[2]) }}</td>
+                            <td style="color: #ddd;">{{ c[3] }}</td>
+                            <td style="color: #777;">{{ c[4] }}</td>
+                            <td>
+                                <form action="/admin/eliminar_comentario/{{ c[0] }}" method="POST" style="margin: 0;" onsubmit="return confirm('¿Eliminar este comentario?');">
+                                    <button type="submit" class="btn-danger">🗑️ Borrar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

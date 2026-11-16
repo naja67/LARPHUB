@@ -1,42 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Larp Hub-Explorar</title>
-    <link rel="stylesheet" href="../static/style.css">
+    <title>LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-        <header class="top-header">
-        <div class="top-bar">
-    <div class ="logo">
-    <img src="../static/o.png" alt="LARP Hub Logo" class="logo-img">
-    </div>
-<div class="top-links">
-    {% if session['username'] %}
-        <span style="color: white; font-weight: bold; margin-right: 15px;">
-            Hola, {{ session['username'] }}
-        </span>
-        <a href="/logout" style="color: #ff4c4c;">Cerrar Sesión</a>
-    {% else %}
-        <a href="/login">Iniciar Sesión</a>
-        <a href="/register">Registrarse</a>
-    {% endif %}
-</div>
-</div>
+<body style="background-color: #111; color: white; margin: 0; padding: 0;">
 
+    <!-- ENCABEZADO IDÉNTICO AL INDEX (Con barra de búsqueda) -->
+    <header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+        <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
+            
+            <div class="logo">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='o.png') }}" alt="LARP Hub Logo" class="logo-img">
+                </a>
+            </div>
 
-<nav class="main-nav">
-    <ul>
-        <li><a href="/" class="active">Inicio</a></li>
-        <li><a href="/browse">Explorar</a></li>
-        <li><a href="/messages">Mensajes</a></li>
-        <li><a href="/blog">Blogs</a></li>
-        <li><a href="/forum">Foros</a></li>
-        <li><a href="/groups">Grupos</a></li>
-    </ul>
-</nav>
+            <form action="/search" method="GET" style="display: flex; align-items: center; background: #1a1a1a; border: 1px solid #444; border-radius: 20px; padding: 3px 10px; margin: 0;">
+                <input type="text" name="q" placeholder="Buscar usuarios..." required style="border: none; background: transparent; color: white; outline: none; font-size: 0.85em; padding: 4px; width: 160px;">
+                <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center;" title="Buscar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: 0.2s;" onmouseover="this.style.stroke='#8a2be2'" onmouseout="this.style.stroke='#ccc'">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="top-links" style="display: flex; align-items: center;">
+                {% if session['username'] %}
+                    <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">
+                        Hola, {{ session['username'] }}
+                    </span>
+                    <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
+                {% else %}
+                    <a href="/login" style="color: white; text-decoration: none; margin-right: 10px;">Iniciar Sesión</a>
+                    <a href="/register" style="color: white; text-decoration: none;">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <nav class="main-nav" style="border-top: 1px solid #333;">
+            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px;">
+                <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
+                <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
+                <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
+                <li style="margin-right: 20px;"><a href="/blog" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
+                <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
+                <li><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+            </ul>
+        </nav>
     </header>
-    <script src="app.js"></script>
+
+    <div style="width: 900px; margin: 20px auto;">
+        
+    </div>
+
 </body>
 </html>
