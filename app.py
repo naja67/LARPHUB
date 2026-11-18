@@ -625,8 +625,29 @@ def search():
 
 @app.route('/browse')
 def browse():
-    return render_template('browse.html')
-
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT username, foto_perfil, estado, es_admin 
+        FROM usuarios 
+        ORDER BY id ASC
+    """)
+    usuarios_raw = cur.fetchall()
+    
+    usuarios = []
+    for u in usuarios_raw:
+        usuarios.append({
+            'username': u[0],
+            'foto': formatear_ruta_media(u[1], 'avatar.png'),
+            'estado': u[2] if u[2] else 'Sin estado',
+            'es_admin': u[3]
+        })
+        
+    cur.close()
+    conn.close()
+    
+    return render_template('browse.html', usuarios=usuarios)
 
 @app.route('/messages', defaults={'destinatario': None}, methods=['GET', 'POST'])
 @app.route('/messages/<string:destinatario>', methods=['GET', 'POST'])
@@ -638,7 +659,6 @@ def messages(destinatario):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Obtener contactos ordenados por el último mensaje recibido/enviado y conteo de no leídos
     cur.execute("""
         SELECT 
             u.username, 
@@ -679,7 +699,6 @@ def messages(destinatario):
         """, (usuario_actual, destinatario, destinatario, usuario_actual))
         son_amigos = cur.fetchone() is not None
 
-        # Marcar como leídos los mensajes de este chat
         cur.execute("""
             UPDATE mensajes SET leido = TRUE 
             WHERE remitente = %s AND destinatario = %s AND leido = FALSE
