@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'llave_secreta_larphub')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-# Conexión exacta por Session Pooler (aws-1 IPv4 compatible con Render)
+# Conexión por Session Pooler (Supabase / Render)
 DB_URI = os.environ.get(
     "DATABASE_URL",
     "postgresql://postgres.tkklqctcddrvbhrehdwu:K9fWXp618zKt0Bgr@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
@@ -26,7 +26,6 @@ def get_db_connection():
 
 
 def archivo_a_base64(file_storage):
-    """Convierte un archivo subido en una cadena Data URI Base64 para guardarlo en Postgres."""
     if not file_storage or file_storage.filename == '':
         return None
     mime_type = file_storage.mimetype
@@ -40,7 +39,6 @@ def archivo_a_base64(file_storage):
 
 
 def formatear_ruta_media(valor, default='avatar.png'):
-    """Devuelve la ruta lista para usar en HTML (soporta Base64, URLs externas y /static/)."""
     if not valor:
         return url_for('static', filename=default)
     if valor.startswith(('data:', 'http://', 'https://', '/')):
@@ -293,7 +291,7 @@ def compartir_post(pub_id):
         if pub:
             texto_compartido = f"📲 Publicación de @{pub[0]}: {pub[2] if pub[2] else ''}"
             cur.execute(
-                "INSERT INTO mensajes (remitente, destinatario, contenido, imagen) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO mensajes (remitente, destinatario, contenido, imagen, leido) VALUES (%s, %s, %s, %s, FALSE)",
                 (remitente, destinatario, texto_compartido, pub[1])
             )
             conn.commit()
@@ -640,15 +638,29 @@ def messages(destinatario):
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # Obtener contactos ordenados por el último mensaje recibido/enviado y conteo de no leídos
     cur.execute("""
-        SELECT u.username, u.foto_perfil, u.estado
+        SELECT 
+            u.username, 
+            u.foto_perfil, 
+            u.estado,
+            (
+                SELECT COUNT(*) FROM mensajes m 
+                WHERE m.remitente = u.username AND m.destinatario = %s AND m.leido = FALSE
+            ) as no_leidos,
+            (
+                SELECT MAX(m.fecha) FROM mensajes m 
+                WHERE (m.remitente = u.username AND m.destinatario = %s) 
+                   OR (m.remitente = %s AND m.destinatario = u.username)
+            ) as ultimo_mensaje
         FROM amistades a
         JOIN usuarios u ON (
             (a.usuario_origen = %s AND a.usuario_destino = u.username) OR
             (a.usuario_destino = %s AND a.usuario_origen = u.username)
         )
         WHERE a.estado = 'aceptada'
-    """, (usuario_actual, usuario_actual))
+        ORDER BY ultimo_mensaje DESC NULLS LAST
+    """, (usuario_actual, usuario_actual, usuario_actual, usuario_actual, usuario_actual))
     contactos = cur.fetchall()
 
     datos_destinatario = None
@@ -667,6 +679,13 @@ def messages(destinatario):
         """, (usuario_actual, destinatario, destinatario, usuario_actual))
         son_amigos = cur.fetchone() is not None
 
+        # Marcar como leídos los mensajes de este chat
+        cur.execute("""
+            UPDATE mensajes SET leido = TRUE 
+            WHERE remitente = %s AND destinatario = %s AND leido = FALSE
+        """, (destinatario, usuario_actual))
+        conn.commit()
+
         if request.method == 'POST' and son_amigos:
             contenido = request.form.get('contenido', '').strip()
             archivo = request.files.get('archivo')
@@ -677,8 +696,8 @@ def messages(destinatario):
 
             if contenido or ruta_archivo:
                 cur.execute("""
-                    INSERT INTO mensajes (remitente, destinatario, contenido, imagen)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO mensajes (remitente, destinatario, contenido, imagen, leido)
+                    VALUES (%s, %s, %s, %s, FALSE)
                 """, (usuario_actual, destinatario, contenido, ruta_archivo))
                 conn.commit()
 

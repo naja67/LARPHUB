@@ -11,7 +11,7 @@
             color: white;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
             padding: 12px 15px;
             border-bottom: 1px solid #222;
             background-color: transparent;
@@ -26,6 +26,16 @@
         }
         .contacto-item.activo .contacto-nombre {
             color: #a855f7;
+        }
+        .badge-no-leidos {
+            background-color: #a855f7;
+            color: white;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
         }
         .fila-msg {
             display: flex;
@@ -152,7 +162,7 @@
             <div class="top-links" style="display: flex; align-items: center;">
                 {% if session['username'] %}
                     <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">
-                        Hola, {{ session['username'] }}
+                        Hola, {{ session['username'] }} {{ badge(session['username']) }}
                     </span>
                     <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
                 {% else %}
@@ -163,33 +173,42 @@
         </div>
 
         <nav class="main-nav" style="border-top: 1px solid #333;">
-            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px;">
+            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px; align-items: center;">
                 <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
                 <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
                 <li style="margin-right: 20px;"><a href="/messages" class="active" style="color: white; text-decoration: underline; font-size: 13px;">Mensajes</a></li>
                 <li style="margin-right: 20px;"><a href="/blog" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
                 <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
-                <li><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+                <li style="margin-right: 20px;"><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+                {% if es_creador %}
+                    <li><a href="/admin" style="color: #ec4899; font-weight: bold; text-decoration: none; font-size: 13px;">🛡️ Panel Admin</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
 
     <div style="width: 900px; height: 550px; margin: 25px auto; display: flex; border: 1px solid #333; background-color: #121212; border-radius: 6px; overflow: hidden;">
         
+        <!-- LISTA DE CONVERSACIONES -->
         <div style="width: 260px; border-right: 1px solid #333; display: flex; flex-direction: column; background-color: #161616;">
             <div style="padding: 12px 15px; background-color: #1a1a1a; font-weight: bold; border-bottom: 1px solid #333; color: #a855f7;">
                 💬 Tus Conversaciones
             </div>
 
-            <div style="overflow-y: auto; flex: 1;">
+            <div id="lista-contactos" style="overflow-y: auto; flex: 1;">
                 {% if contactos %}
                     {% for c in contactos %}
                         <a href="/messages/{{ c[0] }}" class="contacto-item {% if destinatario and destinatario[0] == c[0] %}activo{% endif %}">
-                            <img src="{{ c[1] if c[1] else url_for('static', filename='avatar.png') }}" alt="Avatar" style="width: 42px; height: 42px; object-fit: cover; border-radius: 6px; border: 1px solid #444;">
-                            <div style="overflow: hidden;">
-                                <div class="contacto-nombre">@{{ c[0] }}</div>
-                                <div style="font-size: 0.75em; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c[2] if c[2] else 'Sin estado' }}</div>
+                            <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                                <img src="{{ c[1] if c[1] else url_for('static', filename='avatar.png') }}" alt="Avatar" style="width: 42px; height: 42px; object-fit: cover; border-radius: 6px; border: 1px solid #444; flex-shrink: 0;">
+                                <div style="overflow: hidden;">
+                                    <div class="contacto-nombre">@{{ c[0] }}</div>
+                                    <div style="font-size: 0.75em; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c[2] if c[2] else 'Sin estado' }}</div>
+                                </div>
                             </div>
+                            {% if c[3] > 0 %}
+                                <span class="badge-no-leidos">{{ c[3] }}</span>
+                            {% endif %}
                         </a>
                     {% endfor %}
                 {% else %}
@@ -200,13 +219,14 @@
             </div>
         </div>
 
+        <!-- ZONA DE CHAT -->
         <div style="flex: 1; display: flex; flex-direction: column; background-color: #121212;">
             {% if destinatario %}
                 <div style="padding: 10px 15px; background-color: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">
                     <a href="/profile/{{ destinatario[0] }}" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px;">
                         <img src="{{ destinatario[1] if destinatario[1] else url_for('static', filename='avatar.png') }}" alt="Avatar" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #a855f7;">
                         <div>
-                            <div style="font-weight: bold; font-size: 0.95em;">@{{ destinatario[0] }}</div>
+                            <div style="font-weight: bold; font-size: 0.95em;">@{{ destinatario[0] }} {{ badge(destinatario[0]) }}</div>
                             <div style="font-size: 0.75em; color: #aaa;">{{ destinatario[2] if destinatario[2] else 'Sin estado' }}</div>
                         </div>
                     </a>
@@ -323,20 +343,31 @@
 
         if (caja) {
             caja.scrollTop = caja.scrollHeight;
+        }
 
-            setInterval(async () => {
-                const reproduciendo = Array.from(caja.querySelectorAll('video, audio')).some(m => !m.paused);
-                const menuAbierto = Array.from(document.querySelectorAll('.dropdown-menu-msg')).some(m => m.style.display === 'block');
-                const editando = Array.from(document.querySelectorAll('[id^="editar-form-"]')).some(f => f.style.display === 'block');
+        // Auto-actualizador en tiempo real tanto de mensajes como de la lista de contactos para subirlos arriba
+        setInterval(async () => {
+            const reproduciendo = caja ? Array.from(caja.querySelectorAll('video, audio')).some(m => !m.paused) : false;
+            const menuAbierto = Array.from(document.querySelectorAll('.dropdown-menu-msg')).some(m => m.style.display === 'block');
+            const editando = Array.from(document.querySelectorAll('[id^="editar-form-"]')).some(f => f.style.display === 'block');
+            
+            if (reproduciendo || menuAbierto || editando) return;
+
+            try {
+                const respuesta = await fetch(window.location.href);
+                const textoHtml = await respuesta.text();
+                const doc = new DOMParser().parseFromString(textoHtml, 'text/html');
                 
-                if (reproduciendo || menuAbierto || editando) return;
+                // Actualizar lista de contactos (para que suban los nuevos chats)
+                const nuevaListaContactos = doc.getElementById('lista-contactos');
+                const listaActual = document.getElementById('lista-contactos');
+                if (nuevaListaContactos && listaActual) {
+                    listaActual.innerHTML = nuevaListaContactos.innerHTML;
+                }
 
-                try {
-                    const respuesta = await fetch(window.location.href);
-                    const textoHtml = await respuesta.text();
-                    const doc = new DOMParser().parseFromString(textoHtml, 'text/html');
+                // Actualizar caja de mensajes si estamos dentro de un chat
+                if (caja) {
                     const nuevaCaja = doc.getElementById('caja-mensajes');
-                    
                     if (nuevaCaja) {
                         const nuevaCantidad = nuevaCaja.querySelectorAll('.burbuja-msg').length;
                         if (nuevaCantidad !== cantidadMensajes) {
@@ -345,11 +376,11 @@
                             caja.scrollTop = caja.scrollHeight;
                         }
                     }
-                } catch (e) {
-                    console.error('Error al auto-actualizar chat:', e);
                 }
-            }, 2500);
-        }
+            } catch (e) {
+                console.error('Error al auto-actualizar:', e);
+            }
+        }, 2500);
 
         function toggleMenu(menuId) {
             document.querySelectorAll('.dropdown-menu-msg').forEach(m => {
