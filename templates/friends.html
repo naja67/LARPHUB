@@ -7,10 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body style="background-color: #111; color: white; margin: 0; padding: 0;">
-
     <header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
         <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
-            
             <div class="logo">
                 <a href="/">
                     <img src="{{ url_for('static', filename='o.png') }}" alt="LARP Hub Logo" class="logo-img">
@@ -30,7 +28,7 @@
             <div class="top-links" style="display: flex; align-items: center;">
                 {% if session['username'] %}
                     <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">
-                        Hola, {{ session['username'] }}
+                        Hola, {{ session['username'] }} {{ badge(session['username']) }}
                     </span>
                     <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
                 {% else %}
@@ -41,19 +39,21 @@
         </div>
 
         <nav class="main-nav" style="border-top: 1px solid #333;">
-            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px;">
+            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px; align-items: center;">
                 <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
                 <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
                 <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
                 <li style="margin-right: 20px;"><a href="/blog" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
                 <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
                 <li><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+                {% if es_creador %}
+                    <li style="margin-left: 20px;"><a href="/admin" style="color: #ec4899; font-weight: bold; text-decoration: none; font-size: 13px;">🛡️ Panel Admin</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
 
     <div style="max-width: 800px; margin: 30px auto; display: flex; flex-direction: column; gap: 25px;">
-
         <div style="border: 1px solid #333; background-color: #121212; border-radius: 6px; overflow: hidden;">
             <div style="background-color: #1a1a1a; color: #a855f7; padding: 10px 15px; font-weight: bold; border-bottom: 1px solid #333; display: flex; justify-content: space-between;">
                 <span>Solicitudes de Amistad Recibidas</span>
@@ -68,16 +68,16 @@
                                 <a href="/profile/{{ sol[1] }}" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 12px;">
                                     <img src="{{ sol[2] if sol[2] else url_for('static', filename='default.png') }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #444;">
                                     <div>
-                                        <div style="font-weight: bold; color: #a855f7;">@{{ sol[1] }}</div>
-                                        <div style="font-size: 0.8em; color: #aaa;">💭 {{ sol[3] if sol[3] else 'Sin estado' }}</div>
+                                        <div style="font-weight: bold; color: #a855f7;">@{{ sol[1] }}{{ online_dot(sol[1]) }} {{ badge(sol[1]) }}</div>
+                                        <div style="font-size: 0.8em; color: #aaa;">{{ sol[3] if sol[3] else 'Sin estado' }}</div>
                                     </div>
                                 </a>
                                 <div style="display: flex; gap: 8px;">
                                     <form action="/responder_solicitud/{{ sol[0] }}/aceptar" method="POST" style="margin: 0;">
-                                        <button type="submit" style="background: #a855f7; color: white; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em;">✔ Aceptar</button>
+                                        <button type="submit" style="background: #a855f7; color: white; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em;">Aceptar</button>
                                     </form>
                                     <form action="/responder_solicitud/{{ sol[0] }}/rechazar" method="POST" style="margin: 0;">
-                                        <button type="submit" style="background: #222; color: #ff4c4c; border: 1px solid #444; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">✖ Denegar</button>
+                                        <button type="submit" style="background: #222; color: #ff4c4c; border: 1px solid #444; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">Denegar</button>
                                     </form>
                                 </div>
                             </div>
@@ -103,18 +103,18 @@
                                 <a href="/profile/{{ amigo[1] }}" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px;">
                                     <img src="{{ amigo[2] if amigo[2] else url_for('static', filename='default.png') }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #444;">
                                     <div>
-                                        <div style="font-weight: bold; color: #a855f7; font-size: 0.95em;">@{{ amigo[1] }}</div>
-                                        <div style="font-size: 0.75em; color: #aaa;">💭 {{ amigo[3] if amigo[3] else 'Sin estado' }}</div>
+                                        <div style="font-weight: bold; color: #a855f7; font-size: 0.95em;">@{{ amigo[1] }}{{ online_dot(amigo[1]) }} {{ badge(amigo[1]) }}</div>
+                                        <div style="font-size: 0.75em; color: #aaa;">{{ amigo[3] if amigo[3] else 'Sin estado' }}</div>
                                     </div>
                                 </a>
                                 <form action="/responder_solicitud/{{ amigo[0] }}/rechazar" method="POST" style="margin: 0;">
-                                    <button type="submit" style="background: transparent; color: #ff4c4c; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75em;" title="Eliminar amigo">✖</button>
+                                    <button type="submit" style="background: transparent; color: #ff4c4c; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75em;" title="Eliminar amigo">X</button>
                                 </form>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p style="color: #777; font-size: 0.9em; margin: 0;">Aún no tienes amigos en tu lista. ¡Usa el buscador de arriba para encontrar usuarios!</p>
+                    <p style="color: #777; font-size: 0.9em; margin: 0;">Aún no tienes amigos en tu lista.</p>
                 {% endif %}
             </div>
         </div>
@@ -130,7 +130,7 @@
                     <div style="display: flex; align-items: center; justify-content: space-between; background: #1a1a1a; padding: 8px 15px; border-radius: 6px; border: 1px solid #2a2a2a;">
                         <a href="/profile/{{ env[1] }}" style="text-decoration: none; color: #a855f7; font-weight: bold; display: flex; align-items: center; gap: 10px;">
                             <img src="{{ env[2] if env[2] else url_for('static', filename='default.png') }}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px;">
-                            <span>@{{ env[1] }}</span>
+                            <span>@{{ env[1] }}{{ online_dot(env[1]) }} {{ badge(env[1]) }}</span>
                         </a>
                         <form action="/responder_solicitud/{{ env[0] }}/rechazar" method="POST" style="margin: 0;">
                             <button type="submit" style="background: #222; color: #aaa; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">Cancelar solicitud</button>
@@ -140,8 +140,16 @@
             </div>
         </div>
         {% endif %}
-
     </div>
 
+    {% if session['username'] %}
+    <script>
+        setInterval(() => {
+            if (!document.hidden) {
+                fetch('/ping', { method: 'POST' }).catch(() => {});
+            }
+        }, 35000);
+    </script>
+    {% endif %}
 </body>
 </html>

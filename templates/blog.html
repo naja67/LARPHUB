@@ -34,7 +34,7 @@
 
     <div style="width: 860px; margin: 25px auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 style="color: white; font-size: 1.6em; margin: 0;">📝 Blogs de la Comunidad</h1>
+            <h1 style="color: white; font-size: 1.6em; margin: 0;">Blogs de la Comunidad</h1>
             {% if session['username'] %}
                 <a href="/blog/nuevo" style="background: #a855f7; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.9em;">+ New Blog Entry</a>
             {% endif %}
@@ -46,7 +46,7 @@
                     <div style="background-color: #161616; border: 1px solid #333; border-radius: 6px; padding: 18px;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85em; color: #888;">
                             <img src="{{ b.foto_autor }}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
-                            <span>{{ b.fecha }} — por <a href="/profile/{{ b.autor }}" style="color: #a855f7; text-decoration: none; font-weight: bold;">@{{ b.autor }}</a> {{ badge(b.autor) }}</span>
+                            <span>{{ b.fecha }} — por <a href="/profile/{{ b.autor }}" style="color: #a855f7; text-decoration: none; font-weight: bold;">@{{ b.autor }}</a>{{ online_dot(b.autor) }} {{ badge(b.autor) }}</span>
                             <span>— <strong style="color: #aaa;">{{ b.comentarios }} Comments</strong></span>
                             <span>— <strong style="color: #ff3040;">{{ b.kudos }} Kudos</strong></span>
                         </div>
@@ -69,5 +69,15 @@
             {% endif %}
         </div>
     </div>
+
+    {% if session['username'] %}
+    <script>
+        setInterval(() => {
+            if (!document.hidden) {
+                fetch('/ping', { method: 'POST' }).catch(() => {});
+            }
+        }, 35000);
+    </script>
+    {% endif %}
 </body>
 </html>

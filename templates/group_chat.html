@@ -72,22 +72,20 @@
     </header>
 
     <div style="width: 900px; height: 580px; margin: 25px auto; display: flex; border: 1px solid #333; background-color: #121212; border-radius: 6px; overflow: hidden;">
-        
-        <!-- PANEL IZQUIERDO -->
         <div style="width: 260px; border-right: 1px solid #333; display: flex; flex-direction: column; background-color: #161616;">
             <div style="padding: 15px; text-align: center; border-bottom: 1px solid #333; background-color: #1a1a1a;">
                 <img src="{{ grupo.imagen }}" style="width: 65px; height: 65px; object-fit: cover; border-radius: 6px; border: 1px solid #444; margin-bottom: 8px;">
                 <h2 style="margin: 0; font-size: 1.05em; color: white;">{{ grupo.nombre }}</h2>
-                <div style="font-size: 0.75em; color: #aaa; margin-top: 4px;">Creador: <a href="/profile/{{ grupo.creador }}" style="color: #a855f7; text-decoration: none; font-weight: bold;">@{{ grupo.creador }}</a> {{ badge(grupo.creador) }}</div>
+                <div style="font-size: 0.75em; color: #aaa; margin-top: 4px;">Creador: <a href="/profile/{{ grupo.creador }}" style="color: #a855f7; text-decoration: none; font-weight: bold;">@{{ grupo.creador }}</a>{{ online_dot(grupo.creador) }} {{ badge(grupo.creador) }}</div>
                 
                 {% if session['username'] == grupo.creador %}
-                    <a href="/groups/{{ grupo.id }}/editar" style="display: block; background: #262626; border: 1px solid #444; color: #a855f7; padding: 5px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-decoration: none; margin-top: 10px;">⚙️ Editar Grupo</a>
+                    <a href="/groups/{{ grupo.id }}/editar" style="display: block; background: #262626; border: 1px solid #444; color: #a855f7; padding: 5px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-decoration: none; margin-top: 10px;">Editar Grupo</a>
                 {% endif %}
 
                 <div style="margin-top: 12px;">
                     {% if es_miembro %}
                         <form action="/groups/{{ grupo.id }}/salir" method="POST" style="margin: 0;" onsubmit="return confirm('¿Abandonar este grupo?');">
-                            <button type="submit" style="background: #222; color: #ff4c4c; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; font-size: 0.75em; cursor: pointer; width: 100%;">🚪 Abandonar Grupo</button>
+                            <button type="submit" style="background: #222; color: #ff4c4c; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; font-size: 0.75em; cursor: pointer; width: 100%;">Abandonar Grupo</button>
                         </form>
                     {% else %}
                         <form action="/groups/{{ grupo.id }}/unirse" method="POST" style="margin: 0;">
@@ -104,7 +102,7 @@
                 {% for m in miembros %}
                     <a href="/profile/{{ m.username }}" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; font-size: 0.85em;">
                         <img src="{{ m.foto }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
-                        <span style="font-weight: bold; word-break: break-all;">@{{ m.username }}</span>
+                        <span style="font-weight: bold; word-break: break-all;">@{{ m.username }}{{ online_dot(m.username) }}</span>
                         {% if m.username == grupo.creador %}
                             <span style="font-size: 0.65em; background: #3b1d5e; color: #a855f7; padding: 1px 4px; border-radius: 3px; border: 1px solid #a855f7;">Creador</span>
                         {% endif %}
@@ -113,10 +111,9 @@
             </div>
         </div>
 
-        <!-- PANEL DERECHO: CHAT GRUPAL -->
         <div style="flex: 1; display: flex; flex-direction: column; background-color: #121212;">
             <div style="padding: 12px 15px; background-color: #1a1a1a; border-bottom: 1px solid #333; font-weight: bold; font-size: 0.95em;">
-                💬 Chat de Grupo — {{ grupo.nombre }}
+                Chat de Grupo — {{ grupo.nombre }}
             </div>
 
             <div id="caja-mensajes" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
@@ -127,7 +124,7 @@
                             <img src="{{ msg.foto_remitente }}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #444;">
                             <div style="max-width: 65%;">
                                 <div class="{{ 'nombre-remitente-mio' if es_mio else 'nombre-remitente-otro' }}">
-                                    @{{ msg.remitente }}
+                                    @{{ msg.remitente }}{{ online_dot(msg.remitente) }}
                                     {% if msg.remitente == grupo.creador %}
                                         <span style="font-size: 0.8em; color: #ec4899; margin-left: 4px;">(Creador)</span>
                                     {% endif %}
@@ -184,6 +181,12 @@
         if (caja) {
             caja.scrollTop = caja.scrollHeight;
         }
+
+        setInterval(() => {
+            if (!document.hidden) {
+                fetch('/ping', { method: 'POST' }).catch(() => {});
+            }
+        }, 35000);
     </script>
 </body>
 </html>

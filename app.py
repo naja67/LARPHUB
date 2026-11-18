@@ -633,21 +633,34 @@ def browse():
         FROM usuarios 
         ORDER BY id ASC
     """)
-    usuarios_raw = cur.fetchall()
+    todos_raw = cur.fetchall()
     
-    usuarios = []
-    for u in usuarios_raw:
-        usuarios.append({
-            'username': u[0],
-            'foto': formatear_ruta_media(u[1], 'avatar.png'),
-            'estado': u[2] if u[2] else 'Sin estado',
-            'es_admin': u[3]
-        })
+    cur.execute("""
+        SELECT username, foto_perfil, estado, es_admin 
+        FROM usuarios 
+        WHERE ultima_actividad >= NOW() - INTERVAL '2 minutes'
+        ORDER BY id ASC
+    """)
+    activos_raw = cur.fetchall()
+    
+    def parse_usuarios(raw):
+        lista = []
+        for u in raw:
+            lista.append({
+                'username': u[0],
+                'foto': formatear_ruta_media(u[1], 'avatar.png'),
+                'estado': u[2] if u[2] else 'Sin estado',
+                'es_admin': u[3]
+            })
+        return lista
+
+    todos = parse_usuarios(todos_raw)
+    activos = parse_usuarios(activos_raw)
         
     cur.close()
     conn.close()
     
-    return render_template('browse.html', usuarios=usuarios)
+    return render_template('browse.html', todos=todos, activos=activos)
 
 @app.route('/messages', defaults={'destinatario': None}, methods=['GET', 'POST'])
 @app.route('/messages/<string:destinatario>', methods=['GET', 'POST'])
@@ -1186,6 +1199,85 @@ def editar_grupo(grupo_id):
     cur.close()
     conn.close()
     return render_template('edit_group.html', grupo=grupo)
+
+@app.before_request
+def actualizar_actividad_usuario():
+    # Actualiza la hora de actividad cada vez que el usuario navega por la página
+    if 'username' in session and request.endpoint not in ('static',):
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("UPDATE usuarios SET ultima_actividad = CURRENT_TIMESTAMP WHERE username = %s", (session['username'],))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception:
+            pass
+
+
+@app.route('/ping', methods=['POST'])
+def ping_actividad():
+    # Ruta silenciosa que mantiene al usuario "En línea" mientras tenga la pestaña abierta
+    if 'username' in session:
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("UPDATE usuarios SET ultima_actividad = CURRENT_TIMESTAMP WHERE username = %s", (session['username'],))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception:
+            pass
+    return '', 204
+
+
+@app.context_processor
+def inyectar_funciones_globales():
+    admins = set()
+    usuarios_online = set()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Obtener admins
+        cur.execute("SELECT username FROM usuarios WHERE es_admin = TRUE")
+        admins = {fila[0] for fila in cur.fetchall()}
+        
+        # Obtener usuarios activos en los últimos 2 minutos
+        cur.execute("SELECT username FROM usuarios WHERE ultima_actividad >= NOW() - INTERVAL '2 minutes'")
+        usuarios_online = {fila[0] for fila in cur.fetchall()}
+        
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
+
+    def badge(username):
+        if username in admins:
+            return Markup('<span style="background: #1a1a1a; color: #a855f7; border: 1px solid #3b1d5e; font-size: 0.75em; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: bold; vertical-align: middle; display: inline-flex; align-items: center; gap: 4px;" title="Creador de LARP HUB">🐈‍⬛ Creador</span>')
+        return ''
+
+    def online_dot(username):
+        """Puntito verde compacto ideal para listas de amigos, feed, chat y cuadrículas."""
+        if username in usuarios_online:
+            return Markup('<span style="display: inline-block; width: 9px; height: 9px; background-color: #22c55e; border-radius: 50%; margin-left: 5px; box-shadow: 0 0 6px #22c55e; vertical-align: middle;" title="En línea ahora"></span>')
+        return ''
+
+    def online_banner(username):
+        """Cartel estilo SpaceHey ideal para el Perfil."""
+        if username in usuarios_online:
+            return Markup('<div style="display: inline-flex; align-items: center; gap: 6px; background: #052e16; border: 1px solid #22c55e; color: #4ade80; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-bottom: 12px;"><span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #22c55e;"></span> ONLINE NOW!</div>')
+        return ''
+
+    es_creador = session.get('username') in admins
+    return dict(
+        badge=badge, 
+        online_dot=online_dot, 
+        online_banner=online_banner,
+        es_creador=es_creador, 
+        lista_admins=admins,
+        usuarios_online=usuarios_online
+    )
 
 
 # ================= PANEL DE ADMINISTRACIÓN DEL CREADOR =================

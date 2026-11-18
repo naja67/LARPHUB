@@ -63,6 +63,8 @@
             <img src="{{ perfil[3] if perfil[3] else url_for('static', filename='avatar.png') }}" alt="Foto de perfil" style="width: 150px; height: 150px; border-radius: 10px; object-fit: cover; border: 2px solid #8a2be2;">
         </div>   
         
+        {{ online_banner(perfil[0]) }}
+
         <h1 style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <span>@{{ perfil[0] }}</span>
             {{ badge(perfil[0]) }}
@@ -130,7 +132,7 @@
                         {% for amigo in amigos %}
                             <a href="/profile/{{ amigo[0] }}" style="text-decoration: none; color: #a855f7; display: flex; flex-direction: column; align-items: center;">
                                 <img src="{{ amigo[1] if amigo[1] else url_for('static', filename='avatar.png') }}" alt="{{ amigo[0] }}" style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #444; border-radius: 6px; margin-bottom: 6px;">
-                                <span style="font-size: 0.8em; font-weight: bold; word-break: break-all;">@{{ amigo[0] }}</span>
+                                <span style="font-size: 0.8em; font-weight: bold; word-break: break-all;">@{{ amigo[0] }}{{ online_dot(amigo[0]) }}</span>
                             </a>
                         {% endfor %}
                     </div>
@@ -142,5 +144,14 @@
 
     </div>
 
+    {% if session['username'] %}
+    <script>
+        setInterval(() => {
+            if (!document.hidden) {
+                fetch('/ping', { method: 'POST' }).catch(() => {});
+            }
+        }, 35000);
+    </script>
+    {% endif %}
 </body>
 </html>
