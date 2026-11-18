@@ -770,7 +770,180 @@ def eliminar_mensaje(msg_id):
 
 @app.route('/blog')
 def blog():
-    return render_template('blog.html')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT b.id, b.autor, b.titulo, b.categoria, b.contenido, 
+               TO_CHAR(b.fecha, 'DD/MM/YYYY HH24:MI'), u.foto_perfil
+        FROM blogs b
+        JOIN usuarios u ON b.autor = u.username
+        ORDER BY b.fecha DESC
+    """)
+    blogs_raw = cur.fetchall()
+    
+    blogs = []
+    for b in blogs_raw:
+        blog_id = b[0]
+        cur.execute("SELECT COUNT(*) FROM comentarios_blog WHERE blog_id = %s", (blog_id,))
+        total_comentarios = cur.fetchone()[0]
+        
+        cur.execute("SELECT COUNT(*) FROM kudos_blog WHERE blog_id = %s", (blog_id,))
+        total_kudos = cur.fetchone()[0]
+        
+        blogs.append({
+            'id': blog_id,
+            'autor': b[1],
+            'titulo': b[2],
+            'categoria': b[3],
+            'contenido': b[4],
+            'fecha': b[5],
+            'foto_autor': formatear_ruta_media(b[6]),
+            'comentarios': total_comentarios,
+            'kudos': total_kudos
+        })
+        
+    cur.close()
+    conn.close()
+    return render_template('blog.html', blogs=blogs)
+
+
+@app.route('/blog/nuevo', methods=['GET', 'POST'])
+def nuevo_blog():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        titulo = request.form.get('titulo', '').strip()
+        categoria = request.form.get('categoria', 'General')
+        contenido = request.form.get('contenido', '').strip()
+        
+        if titulo and contenido:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO blogs (autor, titulo, categoria, contenido) VALUES (%s, %s, %s, %s)",
+                (session['username'], titulo, categoria, contenido)
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('blog'))
+            
+    return render_template('new_blog.html')
+
+
+@app.route('/blog/<int:blog_id>')
+def ver_blog(blog_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT b.id, b.autor, b.titulo, b.categoria, b.contenido, 
+               TO_CHAR(b.fecha, 'DD/MM/YYYY HH24:MI'), u.foto_perfil
+        FROM blogs b
+        JOIN usuarios u ON b.autor = u.username
+        WHERE b.id = %s
+    """, (blog_id,))
+    b = cur.fetchone()
+    
+    if not b:
+        cur.close()
+        conn.close()
+        return "Este blog no existe.", 404
+        
+    cur.execute("""
+        SELECT c.id, c.autor, c.comentario, TO_CHAR(c.fecha, 'DD/MM/YYYY HH24:MI'), u.foto_perfil
+        FROM comentarios_blog c
+        JOIN usuarios u ON c.autor = u.username
+        WHERE c.blog_id = %s
+        ORDER BY c.fecha ASC
+    """, (blog_id,))
+    comentarios_raw = cur.fetchall()
+    
+    comentarios = []
+    for c in comentarios_raw:
+        comentarios.append({
+            'id': c[0],
+            'autor': c[1],
+            'comentario': c[2],
+            'fecha': c[3],
+            'foto': formatear_ruta_media(c[4])
+        })
+        
+    cur.execute("SELECT COUNT(*) FROM kudos_blog WHERE blog_id = %s", (blog_id,))
+    total_kudos = cur.fetchone()[0]
+    
+    dio_kudo = False
+    if 'username' in session:
+        cur.execute("SELECT 1 FROM kudos_blog WHERE blog_id = %s AND username = %s", (blog_id, session['username']))
+        dio_kudo = cur.fetchone() is not None
+
+    cur.close()
+    conn.close()
+    
+    blog_obj = {
+        'id': b[0],
+        'autor': b[1],
+        'titulo': b[2],
+        'categoria': b[3],
+        'contenido': b[4],
+        'fecha': b[5],
+        'foto_autor': formatear_ruta_media(b[6]),
+        'kudos': total_kudos,
+        'dio_kudo': dio_kudo
+    }
+    
+    return render_template('view_blog.html', blog=blog_obj, comentarios=comentarios)
+
+
+@app.route('/blog/<int:blog_id>/comentar', methods=['POST'])
+def comentar_blog(blog_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    comentario = request.form.get('comentario', '').strip()
+    if comentario:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO comentarios_blog (blog_id, autor, comentario) VALUES (%s, %s, %s)",
+            (blog_id, session['username'], comentario)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+    return redirect(url_for('ver_blog', blog_id=blog_id))
+
+
+@app.route('/blog/<int:blog_id>/kudo', methods=['POST'])
+def dar_kudo_blog(blog_id):
+    if 'username' not in session:
+        return {'error': 'No autorizado'}, 401
+        
+    usuario = session['username']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT id FROM kudos_blog WHERE blog_id = %s AND username = %s", (blog_id, usuario))
+    existe = cur.fetchone()
+    
+    if existe:
+        cur.execute("DELETE FROM kudos_blog WHERE id = %s", (existe[0],))
+        dio_kudo = False
+    else:
+        cur.execute("INSERT INTO kudos_blog (blog_id, username) VALUES (%s, %s)", (blog_id, usuario))
+        dio_kudo = True
+        
+    conn.commit()
+    cur.execute("SELECT COUNT(*) FROM kudos_blog WHERE blog_id = %s", (blog_id,))
+    total_kudos = cur.fetchone()[0]
+    
+    cur.close()
+    conn.close()
+    
+    return {'dio_kudo': dio_kudo, 'total_kudos': total_kudos}
 
 
 @app.route('/forum')

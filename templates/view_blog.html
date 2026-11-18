@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ blog.titulo }} - LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .kudo-activo { color: #ff3040; }
+        .kudo-inactivo { color: #888; }
+    </style>
+</head>
+<body style="background-color: #111; color: white; margin: 0; padding: 0; font-family: Arial, sans-serif;">
+
+    <header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+        <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
+            <div class="logo"><a href="/"><img src="{{ url_for('static', filename='o.png') }}" alt="Logo" class="logo-img"></a></div>
+            <div class="top-links" style="display: flex; align-items: center;">
+                {% if session['username'] %}
+                    <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">Hola, {{ session['username'] }} {{ badge(session['username']) }}</span>
+                    <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
+                {% else %}
+                    <a href="/login" style="color: white; text-decoration: none; margin-right: 10px;">Iniciar Sesión</a>
+                    <a href="/register" style="color: white; text-decoration: none;">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+        <nav class="main-nav" style="border-top: 1px solid #333;">
+            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px; align-items: center;">
+                <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
+                <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
+                <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
+                <li style="margin-right: 20px;"><a href="/blog" style="color: #a855f7; text-decoration: underline; font-size: 13px; font-weight: bold;">Blogs</a></li>
+                <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
+                <li style="margin-right: 20px;"><a href="/groups" style="color: white; text-decoration: none; font-size: 13px;">Grupos</a></li>
+                {% if es_creador %}
+                    <li><a href="/admin" style="color: #ec4899; font-weight: bold; text-decoration: none; font-size: 13px;">🛡️ Panel Admin</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <div style="width: 860px; margin: 25px auto;">
+        <a href="/blog" style="color: #a855f7; text-decoration: none; font-size: 0.85em; font-weight: bold;">← Volver a los Blogs</a>
+
+        <div style="background-color: #161616; border: 1px solid #333; border-radius: 8px; padding: 25px; margin-top: 15px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.85em; color: #888;">
+                <img src="{{ blog.foto_autor }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+                <div>
+                    <div>Por <a href="/profile/{{ blog.autor }}" style="color: #a855f7; text-decoration: none; font-weight: bold;">@{{ blog.autor }}</a> {{ badge(blog.autor) }}</div>
+                    <div style="font-size: 0.8em; color: #777;">{{ blog.fecha }} • Categoría: <span style="color: #ccc;">{{ blog.categoria }}</span></div>
+                </div>
+            </div>
+
+            <h1 style="color: white; font-size: 1.5em; margin-top: 0; margin-bottom: 15px;">{{ blog.titulo }}</h1>
+            <div style="color: #ddd; font-size: 0.95em; line-height: 1.6; word-break: break-word; white-space: pre-wrap; margin-bottom: 25px;">{{ blog.contenido }}</div>
+
+            <div style="border-top: 1px solid #333; padding-top: 15px; display: flex; align-items: center; gap: 10px;">
+                {% if session['username'] %}
+                    <button type="button" onclick="darKudo('{{ blog.id }}')" style="background: #222; border: 1px solid #444; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                        <span id="icono-kudo" class="{{ 'kudo-activo' if blog.dio_kudo else 'kudo-inactivo' }}">❤️</span>
+                        <span>Kudos (<span id="contador-kudos">{{ blog.kudos }}</span>)</span>
+                    </button>
+                {% else %}
+                    <span style="color: #888; font-size: 0.85em;">❤️ {{ blog.kudos }} Kudos (Inicia sesión para reaccionar)</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <h2 style="font-size: 1.2em; margin-top: 30px; color: white;">💬 Comentarios</h2>
+
+        {% if session['username'] %}
+        <form action="/blog/{{ blog.id }}/comentar" method="POST" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+            <textarea name="comentario" rows="3" placeholder="Escribe un comentario..." required style="background: #161616; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; resize: none; outline: none; box-sizing: border-box;"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" style="background: #a855f7; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em;">Publicar Comentario</button>
+            </div>
+        </form>
+        {% endif %}
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% if comentarios %}
+                {% for c in comentarios %}
+                    <div style="display: flex; background-color: #161616; border: 1px solid #333; border-radius: 6px; overflow: hidden;">
+                        <div style="width: 140px; background-color: #1a1a1a; padding: 12px; text-align: center; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <img src="{{ c.foto }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #444; margin-bottom: 6px;">
+                            <a href="/profile/{{ c.autor }}" style="color: #a855f7; text-decoration: none; font-weight: bold; font-size: 0.85em; word-break: break-all;">@{{ c.autor }}</a>
+                            {{ badge(c.autor) }}
+                        </div>
+                        <div style="flex: 1; padding: 15px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="font-size: 0.75em; color: #888; margin-bottom: 6px;">{{ c.fecha }}</div>
+                            <div style="font-size: 0.9em; color: #ddd; word-break: break-word; line-height: 1.4;">{{ c.comentario }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 20px; color: #777; font-size: 0.85em; text-align: center; background: #161616; border-radius: 6px;">
+                    No hay comentarios aún. ¡Sé el primero en comentar!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        async function darKudo(blogId) {
+            try {
+                const response = await fetch('/blog/' + blogId + '/kudo', { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('contador-kudos').innerText = data.total_kudos;
+                    const icono = document.getElementById('icono-kudo');
+                    icono.className = data.dio_kudo ? 'kudo-activo' : 'kudo-inactivo';
+                }
+            } catch (e) {
+                console.error('Error al dar kudo:', e);
+            }
+        }
+    </script>
+</body>
+</html>
