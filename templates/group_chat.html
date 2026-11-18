@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ grupo.nombre }} - Grupos LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .burbuja-mia {
+            background-color: #3b1d5e;
+            border: 1px solid #a855f7;
+        }
+        .burbuja-otro {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+        }
+        .fila-mensaje-mio {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            flex-direction: row-reverse;
+        }
+        .fila-mensaje-otro {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            flex-direction: row;
+        }
+        .nombre-remitente-mio {
+            font-size: 0.75em;
+            color: #a855f7;
+            font-weight: bold;
+            margin-bottom: 3px;
+            text-align: right;
+        }
+        .nombre-remitente-otro {
+            font-size: 0.75em;
+            color: #a855f7;
+            font-weight: bold;
+            margin-bottom: 3px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body style="background-color: #111; color: white; margin: 0; padding: 0; font-family: Arial, sans-serif;">
+
+    <header class="top-header" style="width: 900px; margin: 0 auto; background-color: #000000;">
+        <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 50px; padding: 0 10px;">
+            <div class="logo"><a href="/"><img src="{{ url_for('static', filename='o.png') }}" alt="Logo" class="logo-img"></a></div>
+            <div class="top-links" style="display: flex; align-items: center;">
+                {% if session['username'] %}
+                    <span style="color: white; font-weight: bold; margin-right: 15px; font-size: 0.9em;">Hola, {{ session['username'] }} {{ badge(session['username']) }}</span>
+                    <a href="/logout" style="color: #ff4c4c; text-decoration: none; font-size: 0.9em;">Cerrar Sesión</a>
+                {% else %}
+                    <a href="/login" style="color: white; text-decoration: none; margin-right: 10px;">Iniciar Sesión</a>
+                    <a href="/register" style="color: white; text-decoration: none;">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+        <nav class="main-nav" style="border-top: 1px solid #333;">
+            <ul style="list-style: none; display: flex; margin: 0; padding: 6px 10px; align-items: center;">
+                <li style="margin-right: 20px;"><a href="/" style="color: white; text-decoration: none; font-size: 13px;">Inicio</a></li>
+                <li style="margin-right: 20px;"><a href="/browse" style="color: white; text-decoration: none; font-size: 13px;">Explorar</a></li>
+                <li style="margin-right: 20px;"><a href="/messages" style="color: white; text-decoration: none; font-size: 13px;">Mensajes</a></li>
+                <li style="margin-right: 20px;"><a href="/blog" style="color: white; text-decoration: none; font-size: 13px;">Blogs</a></li>
+                <li style="margin-right: 20px;"><a href="/forum" style="color: white; text-decoration: none; font-size: 13px;">Foros</a></li>
+                <li><a href="/groups" style="color: #a855f7; text-decoration: underline; font-size: 13px; font-weight: bold;">Grupos</a></li>
+                {% if es_creador %}
+                    <li style="margin-left: 20px;"><a href="/admin" style="color: #ec4899; font-weight: bold; text-decoration: none; font-size: 13px;">🛡️ Panel Admin</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <div style="width: 900px; height: 580px; margin: 25px auto; display: flex; border: 1px solid #333; background-color: #121212; border-radius: 6px; overflow: hidden;">
+        
+        <!-- PANEL IZQUIERDO -->
+        <div style="width: 260px; border-right: 1px solid #333; display: flex; flex-direction: column; background-color: #161616;">
+            <div style="padding: 15px; text-align: center; border-bottom: 1px solid #333; background-color: #1a1a1a;">
+                <img src="{{ grupo.imagen }}" style="width: 65px; height: 65px; object-fit: cover; border-radius: 6px; border: 1px solid #444; margin-bottom: 8px;">
+                <h2 style="margin: 0; font-size: 1.05em; color: white;">{{ grupo.nombre }}</h2>
+                <div style="font-size: 0.75em; color: #aaa; margin-top: 4px;">Creador: <a href="/profile/{{ grupo.creador }}" style="color: #a855f7; text-decoration: none; font-weight: bold;">@{{ grupo.creador }}</a> {{ badge(grupo.creador) }}</div>
+                
+                {% if session['username'] == grupo.creador %}
+                    <a href="/groups/{{ grupo.id }}/editar" style="display: block; background: #262626; border: 1px solid #444; color: #a855f7; padding: 5px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-decoration: none; margin-top: 10px;">⚙️ Editar Grupo</a>
+                {% endif %}
+
+                <div style="margin-top: 12px;">
+                    {% if es_miembro %}
+                        <form action="/groups/{{ grupo.id }}/salir" method="POST" style="margin: 0;" onsubmit="return confirm('¿Abandonar este grupo?');">
+                            <button type="submit" style="background: #222; color: #ff4c4c; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; font-size: 0.75em; cursor: pointer; width: 100%;">🚪 Abandonar Grupo</button>
+                        </form>
+                    {% else %}
+                        <form action="/groups/{{ grupo.id }}/unirse" method="POST" style="margin: 0;">
+                            <button type="submit" style="background: #a855f7; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8em; font-weight: bold; cursor: pointer; width: 100%;">+ Unirse al Grupo</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="padding: 10px 15px; font-weight: bold; font-size: 0.85em; color: #a855f7; border-bottom: 1px solid #222;">
+                Miembros ({{ miembros|length }})
+            </div>
+            <div style="overflow-y: auto; flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                {% for m in miembros %}
+                    <a href="/profile/{{ m.username }}" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; font-size: 0.85em;">
+                        <img src="{{ m.foto }}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
+                        <span style="font-weight: bold; word-break: break-all;">@{{ m.username }}</span>
+                        {% if m.username == grupo.creador %}
+                            <span style="font-size: 0.65em; background: #3b1d5e; color: #a855f7; padding: 1px 4px; border-radius: 3px; border: 1px solid #a855f7;">Creador</span>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- PANEL DERECHO: CHAT GRUPAL -->
+        <div style="flex: 1; display: flex; flex-direction: column; background-color: #121212;">
+            <div style="padding: 12px 15px; background-color: #1a1a1a; border-bottom: 1px solid #333; font-weight: bold; font-size: 0.95em;">
+                💬 Chat de Grupo — {{ grupo.nombre }}
+            </div>
+
+            <div id="caja-mensajes" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+                {% if historial %}
+                    {% for msg in historial %}
+                        {% set es_mio = (msg.remitente == session['username']) %}
+                        <div class="{{ 'fila-mensaje-mio' if es_mio else 'fila-mensaje-otro' }}">
+                            <img src="{{ msg.foto_remitente }}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #444;">
+                            <div style="max-width: 65%;">
+                                <div class="{{ 'nombre-remitente-mio' if es_mio else 'nombre-remitente-otro' }}">
+                                    @{{ msg.remitente }}
+                                    {% if msg.remitente == grupo.creador %}
+                                        <span style="font-size: 0.8em; color: #ec4899; margin-left: 4px;">(Creador)</span>
+                                    {% endif %}
+                                </div>
+                                <div class="{{ 'burbuja-mia' if es_mio else 'burbuja-otro' }}" style="padding: 10px; border-radius: 8px;">
+                                    {% if msg.imagen %}
+                                        {% set ext = msg.imagen | lower %}
+                                        <div style="margin-bottom: 8px;">
+                                            {% if ext.endswith(('.mp4', '.webm', '.ogg', '.mov')) or 'video/' in ext %}
+                                                <video controls style="max-width: 100%; max-height: 220px; border-radius: 6px; display: block;">
+                                                    <source src="{{ msg.imagen }}">
+                                                </video>
+                                            {% else %}
+                                                <a href="{{ msg.imagen }}" target="_blank">
+                                                    <img src="{{ msg.imagen }}" style="max-width: 100%; max-height: 220px; border-radius: 6px; display: block; border: 1px solid #444;">
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% if msg.contenido %}
+                                        <div style="font-size: 0.9em; line-height: 1.4; word-break: break-word;">{{ msg.contenido }}</div>
+                                    {% endif %}
+                                    <div style="font-size: 0.65em; color: #aaa; text-align: right; margin-top: 4px;">{{ msg.fecha }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="margin: auto; color: #666; font-size: 0.9em; text-align: center;">
+                        Aún no hay mensajes en este grupo. ¡Sé el primero en escribir!
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if es_miembro %}
+            <form action="/groups/{{ grupo.id }}" method="POST" enctype="multipart/form-data" style="padding: 10px 15px; background-color: #1a1a1a; border-top: 1px solid #333; display: flex; align-items: center; gap: 10px; margin: 0;">
+                <label style="cursor: pointer; background: #262626; border: 1px solid #444; padding: 7px 10px; border-radius: 4px; font-size: 0.85em; display: flex; align-items: center; gap: 5px; color: #ccc;" title="Adjuntar foto o video">
+                    📎 <span id="nombre-archivo" style="max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Media</span>
+                    <input type="file" name="archivo" accept="image/*,video/*" style="display: none;" onchange="document.getElementById('nombre-archivo').innerText = this.files[0] ? this.files[0].name : 'Media';">
+                </label>
+                <input type="text" name="contenido" placeholder="Escribe un mensaje al grupo..." autocomplete="off" style="flex: 1; background: #111; border: 1px solid #444; color: white; padding: 8px 12px; border-radius: 4px; outline: none; font-size: 0.9em;">
+                <button type="submit" style="background: #a855f7; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">Enviar</button>
+            </form>
+            {% else %}
+            <div style="padding: 12px 15px; background-color: #1a1a1a; border-top: 1px solid #333; text-align: center; color: #aaa; font-size: 0.85em;">
+                Debes unirte a este grupo para poder enviar mensajes y ver las conversaciones.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const caja = document.getElementById('caja-mensajes');
+        if (caja) {
+            caja.scrollTop = caja.scrollHeight;
+        }
+    </script>
+</body>
+</html>

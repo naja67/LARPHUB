@@ -953,7 +953,220 @@ def forum():
 
 @app.route('/groups')
 def groups():
-    return render_template('groups.html')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Obtener grupos con su conteo de miembros
+    cur.execute("""
+        SELECT g.id, g.nombre, g.descripcion, g.categoria, g.creador, g.imagen,
+               (SELECT COUNT(*) FROM miembros_grupo m WHERE m.grupo_id = g.id) as miembros_count
+        FROM grupos g
+        ORDER BY miembros_count DESC, g.fecha DESC
+    """)
+    grupos_raw = cur.fetchall()
+    
+    grupos = []
+    for g in grupos_raw:
+        grupos.append({
+            'id': g[0],
+            'nombre': g[1],
+            'descripcion': g[2],
+            'categoria': g[3],
+            'creador': g[4],
+            'imagen': formatear_ruta_media(g[5], 'avatar.png'),
+            'miembros': g[6]
+        })
+        
+    cur.close()
+    conn.close()
+    return render_template('groups.html', grupos=grupos)
+
+
+@app.route('/groups/nuevo', methods=['GET', 'POST'])
+def nuevo_grupo():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        descripcion = request.form.get('descripcion', '').strip()
+        categoria = request.form.get('categoria', 'General')
+        foto = request.files.get('imagen')
+        ruta_foto = None
+        
+        if foto and foto.filename != '':
+            ruta_foto = archivo_a_base64(foto)
+            
+        if nombre:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO grupos (nombre, descripcion, categoria, creador, imagen) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (nombre, descripcion, categoria, session['username'], ruta_foto)
+            )
+            grupo_id = cur.fetchone()[0]
+            
+            # Unir automáticamente al creador como miembro del grupo
+            cur.execute("INSERT INTO miembros_grupo (grupo_id, username) VALUES (%s, %s) ON CONFLICT DO NOTHING", (grupo_id, session['username']))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return redirect(url_for('ver_grupo', grupo_id=grupo_id))
+            
+    return render_template('new_group.html')
+
+
+@app.route('/groups/<int:grupo_id>', methods=['GET', 'POST'])
+def ver_grupo(grupo_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    usuario_actual = session['username']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT id, nombre, descripcion, categoria, creador, imagen FROM grupos WHERE id = %s", (grupo_id,))
+    g = cur.fetchone()
+    
+    if not g:
+        cur.close()
+        conn.close()
+        return "Este grupo no existe.", 404
+        
+    grupo = {
+        'id': g[0],
+        'nombre': g[1],
+        'descripcion': g[2],
+        'categoria': g[3],
+        'creador': g[4],
+        'imagen': formatear_ruta_media(g[5], 'avatar.png')
+    }
+    
+    # Verificar si el usuario es miembro
+    cur.execute("SELECT 1 FROM miembros_grupo WHERE grupo_id = %s AND username = %s", (grupo_id, usuario_actual))
+    es_miembro = cur.fetchone() is not None
+    
+    # Manejar envío de mensajes o archivos en el chat grupal
+    if request.method == 'POST' and es_miembro:
+        contenido = request.form.get('contenido', '').strip()
+        archivo = request.files.get('archivo')
+        ruta_archivo = None
+        
+        if archivo and archivo.filename != '':
+            ruta_archivo = archivo_a_base64(archivo)
+            
+        if contenido or ruta_archivo:
+            cur.execute(
+                "INSERT INTO mensajes_grupo (grupo_id, remitente, contenido, imagen) VALUES (%s, %s, %s, %s)",
+                (grupo_id, usuario_actual, contenido, ruta_archivo)
+            )
+            conn.commit()
+            
+        cur.close()
+        conn.close()
+        return redirect(url_for('ver_grupo', grupo_id=grupo_id))
+        
+    # Obtener miembros del grupo
+    cur.execute("""
+        SELECT u.username, u.foto_perfil 
+        FROM miembros_grupo m
+        JOIN usuarios u ON m.username = u.username
+        WHERE m.grupo_id = %s
+    """, (grupo_id,))
+    miembros_raw = cur.fetchall()
+    miembros = [{'username': m[0], 'foto': formatear_ruta_media(m[1])} for m in miembros_raw]
+    
+    # Obtener historial del chat grupal con foto y nombre del remitente
+    cur.execute("""
+        SELECT m.remitente, m.contenido, m.imagen, TO_CHAR(m.fecha, 'HH24:MI - DD/MM'), u.foto_perfil, m.id
+        FROM mensajes_grupo m
+        JOIN usuarios u ON m.remitente = u.username
+        WHERE m.grupo_id = %s
+        ORDER BY m.fecha ASC
+    """, (grupo_id,))
+    hist_raw = cur.fetchall()
+    
+    historial = []
+    for h in hist_raw:
+        historial.append({
+            'remitente': h[0],
+            'contenido': h[1],
+            'imagen': h[2],
+            'fecha': h[3],
+            'foto_remitente': formatear_ruta_media(h[4]),
+            'id': h[5]
+        })
+        
+    cur.close()
+    conn.close()
+    return render_template('group_chat.html', grupo=grupo, miembros=miembros, es_miembro=es_miembro, historial=historial)
+
+
+@app.route('/groups/<int:grupo_id>/unirse', methods=['POST'])
+def unirse_grupo(grupo_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO miembros_grupo (grupo_id, username) VALUES (%s, %s) ON CONFLICT DO NOTHING", (grupo_id, session['username']))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('ver_grupo', grupo_id=grupo_id))
+
+
+@app.route('/groups/<int:grupo_id>/salir', methods=['POST'])
+def salir_grupo(grupo_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Evitar que el creador abandone su propio grupo si es el único, o permitirlo
+    cur.execute("DELETE FROM miembros_grupo WHERE grupo_id = %s AND username = %s", (grupo_id, session['username']))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('groups'))
+
+
+@app.route('/groups/<int:grupo_id>/editar', methods=['GET', 'POST'])
+def editar_grupo(grupo_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT nombre, descripcion, categoria, creador, imagen FROM grupos WHERE id = %s", (grupo_id,))
+    g = cur.fetchone()
+    
+    if not g or g[3] != session['username']:
+        cur.close()
+        conn.close()
+        return "Acceso denegado: Solo el creador puede editar este grupo.", 403
+        
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        descripcion = request.form.get('descripcion', '').strip()
+        categoria = request.form.get('categoria', 'General')
+        foto = request.files.get('imagen')
+        
+        if foto and foto.filename != '':
+            ruta_foto = archivo_a_base64(foto)
+            cur.execute("UPDATE grupos SET nombre = %s, descripcion = %s, categoria = %s, imagen = %s WHERE id = %s", (nombre, descripcion, categoria, ruta_foto, grupo_id))
+        else:
+            cur.execute("UPDATE grupos SET nombre = %s, descripcion = %s, categoria = %s WHERE id = %s", (nombre, descripcion, categoria, grupo_id))
+            
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for('ver_grupo', grupo_id=grupo_id))
+        
+    grupo = {'id': grupo_id, 'nombre': g[0], 'descripcion': g[1], 'categoria': g[2], 'imagen': formatear_ruta_media(g[4])}
+    cur.close()
+    conn.close()
+    return render_template('edit_group.html', grupo=grupo)
 
 
 # ================= PANEL DE ADMINISTRACIÓN DEL CREADOR =================

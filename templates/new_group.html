@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Grupo - LARP HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="background-color: #111; color: white; margin: 0; padding: 0; font-family: Arial, sans-serif;">
+    <div style="width: 600px; margin: 40px auto; background-color: #161616; border: 1px solid #333; border-radius: 8px; padding: 25px;">
+        <h2 style="color: #a855f7; margin-top: 0;">🚀 Crear un Nuevo Grupo</h2>
+        <form action="/groups/nuevo" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <label style="display: block; font-size: 0.85em; color: #aaa; margin-bottom: 5px;">Nombre del Grupo</label>
+                <input type="text" name="nombre" required style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.85em; color: #aaa; margin-bottom: 5px;">Categoría</label>
+                <select name="categoria" style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px;">
+                    <option value="General">General</option>
+                    <option value="Music">Music</option>
+                    <option value="Anime & Manga">Anime & Manga</option>
+                    <option value="Games">Games</option>
+                    <option value="Friends">Friends</option>
+                    <option value="Web, HTML, Tech">Web, HTML, Tech</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.85em; color: #aaa; margin-bottom: 5px;">Descripción</label>
+                <textarea name="descripcion" rows="4" required style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; resize: vertical; box-sizing: border-box;"></textarea>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.85em; color: #aaa; margin-bottom: 5px;">Imagen o Banner del Grupo</label>
+                <input type="file" name="imagen" accept="image/*" style="color: #ccc; font-size: 0.85em;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <a href="/groups" style="background: #333; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9em;">Cancelar</a>
+                <button type="submit" style="background: #a855f7; color: white; border: none; padding: 8px 18px; border-radius: 4px; font-weight: bold; cursor: pointer;">Crear Grupo</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
